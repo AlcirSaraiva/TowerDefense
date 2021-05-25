@@ -69,5 +69,7 @@ public class Audio {
     public void unload() {
         soundPool.release();
         soundPool = null;
+        soundtrack.release();
+        soundtrack = null;
     }
 }

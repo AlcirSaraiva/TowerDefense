@@ -3979,39 +3979,43 @@ public class MainActivity extends AppCompatActivity {
         oldFieldSelectionY = fieldSelectionY;
         fieldSelectionX = touchX / towerSize;
         fieldSelectionY = (touchY + fdy) / towerSize;
-        currentTower = fieldTower[fieldSelectionX][fieldSelectionY];
-        currentTowerLevel = fieldLevel[fieldSelectionX][fieldSelectionY];
-
-        if ((fieldSelectionY <= minVertTower ||
-                fieldSelectionY >= maxVertTower) ||
-                (fieldSelectionX == oldFieldSelectionX &&
-                        fieldSelectionY == oldFieldSelectionY) || currentTower == BLOCKED1 || currentTower == BLOCKED2 || currentTower == BLOCKED3 || currentTower == BLOCKED4) {
-            audio.play(audioFieldSelect, false, now);
+        if (fieldSelectionY >= vertTowers) {
             resetTowerMark();
-            towerMenu = false;
-            upgradeMenu = false;
-        } else if (currentTower == EMPTY1 ||
-                currentTower == EMPTY2 ||
-                currentTower == EMPTY3 ||
-                currentTower == EMPTY4 ||
-                currentTower == TOWER1_D ||
-                currentTower == TOWER2_D ||
-                currentTower == TOWER3_D ||
-                currentTower == TOWER4_D) {
-            audio.play(audioFieldSelect, false, now);
-            towerMenu = true; // mark in the field where touched
-            confirmation = false;
-            confirmationX = OUT_OF_BOUNDS;
-            confirmationY = OUT_OF_BOUNDS;
-        } else if (currentTower != BASE && currentTower != BLOCKED1 && currentTower != BLOCKED2 && currentTower != BLOCKED3 && currentTower != BLOCKED4) {
-            audio.play(audioFieldSelect, false, now);
-            towerMenu = false;
-            upgradeMenu = true; // the place has already a tower
-            confirmation = false;
-            confirmationX = OUT_OF_BOUNDS;
-            confirmationY = OUT_OF_BOUNDS;
-            checkTowerType();
-            checkTowerLevel();
+        } else {
+            currentTower = fieldTower[fieldSelectionX][fieldSelectionY];
+            currentTowerLevel = fieldLevel[fieldSelectionX][fieldSelectionY];
+
+            if ((fieldSelectionY <= minVertTower ||
+                    fieldSelectionY >= maxVertTower) ||
+                    (fieldSelectionX == oldFieldSelectionX &&
+                            fieldSelectionY == oldFieldSelectionY) || currentTower == BLOCKED1 || currentTower == BLOCKED2 || currentTower == BLOCKED3 || currentTower == BLOCKED4) {
+                audio.play(audioFieldSelect, false, now);
+                resetTowerMark();
+                towerMenu = false;
+                upgradeMenu = false;
+            } else if (currentTower == EMPTY1 ||
+                    currentTower == EMPTY2 ||
+                    currentTower == EMPTY3 ||
+                    currentTower == EMPTY4 ||
+                    currentTower == TOWER1_D ||
+                    currentTower == TOWER2_D ||
+                    currentTower == TOWER3_D ||
+                    currentTower == TOWER4_D) {
+                audio.play(audioFieldSelect, false, now);
+                towerMenu = true; // mark in the field where touched
+                confirmation = false;
+                confirmationX = OUT_OF_BOUNDS;
+                confirmationY = OUT_OF_BOUNDS;
+            } else if (currentTower != BASE && currentTower != BLOCKED1 && currentTower != BLOCKED2 && currentTower != BLOCKED3 && currentTower != BLOCKED4) {
+                audio.play(audioFieldSelect, false, now);
+                towerMenu = false;
+                upgradeMenu = true; // the place has already a tower
+                confirmation = false;
+                confirmationX = OUT_OF_BOUNDS;
+                confirmationY = OUT_OF_BOUNDS;
+                checkTowerType();
+                checkTowerLevel();
+            }
         }
     }
 
@@ -5129,6 +5133,10 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
         switch (gameState) {
             case "menu":
+                if (receiver != null) {
+                    unregisterReceiver(receiver);
+                }
+                audio.unload();
                 super.onBackPressed();
                 break;
             case "levels":
