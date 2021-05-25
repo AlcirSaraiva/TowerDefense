@@ -125,6 +125,8 @@ public class MainActivity extends AppCompatActivity {
     private int[] achievedRanks;
     private String[] levelTitle, levelDescription;
     private int currentRank;
+    private boolean levelStartFieldScroll = false;
+    private long levelStartTime, levelStartFieldScrollDelay = 1000;
 
     // field
     private int extraScreen; // how much beyond screenHeight will be used for the field
@@ -2034,6 +2036,7 @@ public class MainActivity extends AppCompatActivity {
             switch (action) {
                 case "down" :
                     touchInitY = touchY;
+                    if (levelStartFieldScroll) levelStartFieldScroll = false;
                     break;
                 case "move" :
                     if (vertTowers > screenHeight / towerSize && alive && !won && !gameClosePressed) {
@@ -2621,7 +2624,6 @@ public class MainActivity extends AppCompatActivity {
             audio.playTrack();
             level = whichLevel;
             currWave = 0;
-            fdy = 0;
             towerMenu = false;
             upgradeMenu = false;
             confirmation = false;
@@ -2643,6 +2645,7 @@ public class MainActivity extends AppCompatActivity {
 
             maxVertTower = vertTowers - 1;
             extraScreen = ((vertTowers - (screenHeight / towerSize)) * towerSize) - marginY;
+            fdy = extraScreen;
             fieldTower = new char[horizTower][vertTowers];
             buildingTower = new boolean[horizTower][vertTowers];
             buildingTowerTime = new long[horizTower][vertTowers];
@@ -2677,6 +2680,15 @@ public class MainActivity extends AppCompatActivity {
             deadEnemyChar = new ArrayList<>();
             deadEnemyTime = new ArrayList<>();
             deadEnemySize = new ArrayList<>();
+
+            if (fieldTower[0].length > screenHeight / towerSize) {
+                levelStartFieldScroll = true;
+            } else {
+                fdy = 0;
+                levelStartFieldScroll = false;
+            }
+
+            levelStartTime = now;
 
             setNewWave(currWave);
         } else {
@@ -4276,6 +4288,15 @@ public class MainActivity extends AppCompatActivity {
 
     private void drawFieldAndTowers() {
         long tt;
+        // level start field scroll
+        if (levelStartFieldScroll && now - levelStartTime > levelStartFieldScrollDelay) {
+            fdy -= enemyDefaultHalfSize / 3;
+            if (fdy < 0) {
+                fdy = 0;
+                levelStartFieldScroll = false;
+            }
+        }
+
         for (int j = 0; j < fieldTower[0].length; j ++) {
             for (int i = 0; i < fieldTower.length; i ++) {
                 getTowerUpgradeLevel(i, j);
