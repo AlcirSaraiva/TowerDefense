@@ -186,6 +186,9 @@ public class MainActivity extends AppCompatActivity {
     private HashMap<Character, Character> towerMaxUpdate;
     private char currentTower, currentTowerLevel;
     private long tempTime;
+    private long[][] towerTimerOfDeath;
+    private long deadTowerTimeLimit = 2000;
+    private Paint fieldTowerAlpha;
 
     // enemies
     private final char ENEMY0 = 48, ENEMY1 = 49, ENEMY2 = 50, ENEMY3 = 51, ENEMY4 = 52, ENEMY5 = 53, ENEMY6 = 54, ENEMY7 = 55, ENEMY8 = 56, ENEMY9 = 57;
@@ -346,6 +349,7 @@ public class MainActivity extends AppCompatActivity {
         towerMaxUpdate = new HashMap<>();
 
         deadEnemyAlpha = new Paint();
+        fieldTowerAlpha = new Paint();
     }
 
     private void getScreenDimensions() {
@@ -2648,6 +2652,7 @@ public class MainActivity extends AppCompatActivity {
             fieldTowerShooting = new boolean[horizTower][vertTowers];
             fieldTowerShootingTime = new long[horizTower][vertTowers];
             fieldTowerShootingSprite = new int[horizTower][vertTowers];
+            towerTimerOfDeath = new long[horizTower][vertTowers];
 
             setField();
             currHearts = levelHearts;
@@ -3607,6 +3612,7 @@ public class MainActivity extends AppCompatActivity {
                 fieldTowerShooting[i][j] = false;
                 fieldTowerShootingTime[i][j] = System.currentTimeMillis();
                 fieldTowerShootingSprite[i][j] = 0;
+                towerTimerOfDeath[i][j] = now;
             }
         }
     }
@@ -4038,6 +4044,7 @@ public class MainActivity extends AppCompatActivity {
                 fieldTower[tmx][tmy] = TOWER4_D;
                 break;
         }
+        towerTimerOfDeath[tmx][tmy] = now;
         fieldLevel[tmx][tmy] = EMPTY1;
         towerCurrLife[tmx][tmy] = OUT_OF_BOUNDS;
         if (fieldSelectionX == tmx && fieldSelectionY == tmy) {
@@ -4268,6 +4275,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void drawFieldAndTowers() {
+        long tt;
         for (int j = 0; j < fieldTower[0].length; j ++) {
             for (int i = 0; i < fieldTower.length; i ++) {
                 getTowerUpgradeLevel(i, j);
@@ -4279,12 +4287,37 @@ public class MainActivity extends AppCompatActivity {
                         buildingTower[i][j] = false;
                     }
                 } else {
-                    drawSprite(fieldTower[i][j], i * towerSize, (j * towerSize) - fdy, null);
+                    if (fieldTower[i][j] == TOWER1_D ||
+                            fieldTower[i][j] == TOWER2_D ||
+                            fieldTower[i][j] == TOWER3_D ||
+                            fieldTower[i][j] == TOWER4_D) {
+                        tt = now - towerTimerOfDeath[i][j];
+                        if (tt >= deadTowerTimeLimit) { // tower death ended, cleans field
+                            fieldTower[i][j] = EMPTY1;
+                            drawSprite(fieldTower[i][j], i * towerSize, (j * towerSize) - fdy, null);
+                        } else { // fade dead tower
+                            int dta = 255 - (int)((float)tt / deadTowerTimeLimit * 255);
+                            fieldTowerAlpha.setAlpha(dta);
+                            drawSprite(EMPTY1, i * towerSize, (j * towerSize) - fdy, null);
+                            drawSprite(fieldTower[i][j], i * towerSize, (j * towerSize) - fdy, fieldTowerAlpha);
+                        }
+                    } else { // draws field
+                        drawSprite(fieldTower[i][j], i * towerSize, (j * towerSize) - fdy, null);
+                    }
                     drawTowerLifeBar(i, j);
                     if (!gameClosePressed) checkForEnemies(i, j);
                 }
             }
         }
+
+        if (fieldTower[0].length < screenHeight / towerSize) {
+            for (int j = fieldTower[0].length; j <= screenHeight / towerSize; j ++) {
+                for (int i = 0; i < fieldTower.length; i ++) {
+                    drawSprite(BASE, i * towerSize, (j * towerSize) - fdy, null);
+                }
+            }
+        }
+
         if (!gameClosePressed) {
             drawTowerShots();
             if (towerMenu || upgradeMenu)
