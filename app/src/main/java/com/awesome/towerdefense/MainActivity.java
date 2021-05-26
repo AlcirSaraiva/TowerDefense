@@ -2745,16 +2745,21 @@ public class MainActivity extends AppCompatActivity {
         waveEnemySize = new float[waveEnemies[cw].length()];
         waveEnemyMoving = new boolean[waveEnemies[cw].length()];
 
-        int spaceNeededForEnemies = waveEnemies[cw].length() * enemyDefaultHalfSize;
+        /*
+        // calculates spaceAvailableForEnemies
         int fc = 0;
         for (int xc = 0; xc < horizTower; xc ++) {
-            if (fieldTower[xc][0] != BLOCKED1 && fieldTower[xc][0] != BLOCKED2 && fieldTower[xc][0] != BLOCKED3 && fieldTower[xc][0] != BLOCKED4) {
+            if (fieldTower[xc][0] != BLOCKED1 &&
+                    fieldTower[xc][0] != BLOCKED2 &&
+                    fieldTower[xc][0] != BLOCKED3 &&
+                    fieldTower[xc][0] != BLOCKED4) {
                 fc ++;
             }
         }
-        int spaceAvailableForEnemies = fc * enemyDefaultHalfSize;
+        int spaceAvailableForEnemies = fc * enemyDefaultSize;*/
 
         Arrays.fill(waveEnemyX, OUT_OF_BOUNDS);
+        float sumOfEnemySizes = 0;
         for (int i = 0; i < waveEnemies[cw].length(); i ++) {
             do {
                 waveEnemyX[i] = (int) (Math.random() * screenWidth);
@@ -2762,19 +2767,11 @@ public class MainActivity extends AppCompatActivity {
                 if (tempI > horizTower - 1) {
                     tempI = horizTower - 1;
                 }
-
-                if (spaceAvailableForEnemies > spaceNeededForEnemies) { // if there is enough space, distribute enemies
-                    for (int j = 0; j <= i; j++) {
-                        if (i != j) {
-                            if (waveEnemyX[i] > waveEnemyX[j] - 20 && waveEnemyX[i] < waveEnemyX[j] + 20) {
-                                waveEnemyX[i] = OUT_OF_BOUNDS;
-                                j = i + 1;
-                            }
-                        }
-                    }
-                }
-            } while (fieldTower[tempI][0] == BLOCKED1 || fieldTower[tempI][0] == BLOCKED2 || fieldTower[tempI][0] == BLOCKED3 || fieldTower[tempI][0] == BLOCKED4 || waveEnemyX[i] == OUT_OF_BOUNDS);
-            waveEnemyY[i] = waveStartPoint - (float) (Math.random() + (i * enemyFieldBlock));
+            } while (fieldTower[tempI][0] == BLOCKED1 ||
+                    fieldTower[tempI][0] == BLOCKED2 ||
+                    fieldTower[tempI][0] == BLOCKED3 ||
+                    fieldTower[tempI][0] == BLOCKED4 ||
+                    waveEnemyX[i] == OUT_OF_BOUNDS);
             waveEnemyShotY[i] = enemyDefaultHalfSize;
             switch (waveEnemies[cw].charAt(i)) {
                 case ENEMY0 :
@@ -3623,8 +3620,13 @@ public class MainActivity extends AppCompatActivity {
             waveEnemyLastAttack[i] = System.currentTimeMillis();
             waveEnemyLastSprite[i] = System.currentTimeMillis();
             waveEnemyMoving[i] = true;
-            waveStartTime = now;
+            sumOfEnemySizes += waveEnemySize[i];
         }
+        float averageEnemySize = sumOfEnemySizes / waveEnemies[cw].length() * enemyDefaultSize;
+        for (int i = 0; i < waveEnemies[cw].length(); i ++) {
+            waveEnemyY[i] = waveStartPoint - (float) (Math.random() + (i * averageEnemySize * 1.2));
+        }
+        waveStartTime = now;
     }
 
     private void setField() {
