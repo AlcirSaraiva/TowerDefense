@@ -738,50 +738,74 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (result) {
-            if (!lssFile.exists()) { // creates level screen settings
-                if (mod.equals("default")) {
-                    File[] fList;
-                    String[] list;
-                    String tempValue;
-                    ArrayList<String> levelNames = new ArrayList<>();
-                    ArrayList<String> levelDescriptions = new ArrayList<>();
-                    try {
-                        fList = lssLevelsFolder.listFiles();
-                        list = new String[fList.length - 1];
-                        int lN = 0;
-                        for (int fl = 0; fl < fList.length; fl ++) {
-                            if (!fList[fl].getName().equals("textures")) {
-                                list[lN] = fList[fl].getName();
-                                lN ++;
+            if (mod.equals("default")) {
+                File[] fList;
+                String tempValue;
+                ArrayList<String> list = new ArrayList<>();
+                ArrayList<String> levelNames = new ArrayList<>();
+                ArrayList<String> levelDescriptions = new ArrayList<>();
+                try {
+                    fList = lssLevelsFolder.listFiles();
+
+                    for (int fl = 0; fl < fList.length; fl ++) {
+                        if (!fList[fl].getName().equals("textures")) {
+                            list.add(fList[fl].getName());
+                        }
+                    }
+
+                    for (String each : list) {
+                        tempValue = getValueFromLocalLevel(mod, each, "levelname");
+                        if (!tempValue.equals("error") && !tempValue.isEmpty()) {
+                            levelNames.add(tempValue);
+                        } else {
+                            result = false;
+                        }
+                        tempValue = getValueFromLocalLevel(mod, each, "leveldescription");
+                        if (!tempValue.equals("error") && !tempValue.isEmpty()) {
+                            levelDescriptions.add(tempValue);
+                        } else {
+                            result = false;
+                        }
+                    }
+
+                    // puts everything in order
+                    int ns = list.size();
+                    String temp;
+                    for (int o = 0; o < ns; o ++) {
+                        for (int n = o + 1; n < ns; n ++) {
+                            int fn = Integer.parseInt(list.get(n).substring(6, 9));
+                            int fo = Integer.parseInt(list.get(o).substring(6, 9));
+                            if (fn < fo) {
+                                temp = list.get(n);
+                                list.set(n, list.get(o));
+                                list.set(o, temp);
+
+                                temp = levelNames.get(n);
+                                levelNames.set(n, levelNames.get(o));
+                                levelNames.set(o, temp);
+
+                                temp = levelDescriptions.get(n);
+                                levelDescriptions.set(n, levelDescriptions.get(o));
+                                levelDescriptions.set(o, temp);
                             }
                         }
-
-                        for (String each : list) {
-                            tempValue = getValueFromLocalLevel(mod, each, "levelname");
-                            if (!tempValue.equals("error") && !tempValue.isEmpty()) {
-                                levelNames.add(tempValue);
-                            } else {
-                                result = false;
-                            }
-                            tempValue = getValueFromLocalLevel(mod, each, "leveldescription");
-                            if (!tempValue.equals("error") && !tempValue.isEmpty()) {
-                                levelDescriptions.add(tempValue);
-                            } else {
-                                result = false;
-                            }
-                        }
-                    } catch (Exception e) {
-                        result = false;
-                        e.printStackTrace();
                     }
-                    if (result && levelNames.size() > 0 && levelDescriptions.size() > 0 && levelNames.size() == levelDescriptions.size()) {
-                        result = saveLevelListFile(mod, levelNames, levelDescriptions);
-                    } else {
-                        result = false;
-                    }
-                } else { // TODO create mod level screen settings
 
+                    /*for (int g = 0; g < list.size(); g ++) { // just prints the generated lists
+                        System.out.println(TAG + list.get(g) + " - " + levelNames.get(g) + " - " + levelDescriptions.get(g));
+                    }*/
+
+                } catch (Exception e) {
+                    result = false;
+                    e.printStackTrace();
                 }
+                if (result && levelNames.size() > 0 && levelDescriptions.size() > 0 && levelNames.size() == levelDescriptions.size()) {
+                    result = saveLevelListFile(mod, levelNames, levelDescriptions);
+                } else {
+                    result = false;
+                }
+            } else { // TODO create mod level screen settings
+
             }
 
             vertLevels = 0;
