@@ -84,6 +84,8 @@ public class MainActivity extends AppCompatActivity {
     private final char PLAY_BUTTON = 32, LEVEL_BUTTON = 33, CLOSE_BUTTON = 34, LEVEL_BLOCKED_BUTTON = 112, LEVEL_COMING_SOON = 120;
     private final char DIALOG_TL = 100, DIALOG_TR = 101, DIALOG_BL = 102, DIALOG_BR = 103;
     private final char DIALOG_BG = 105, DIALOG_L = 106, DIALOG_R = 116, DIALOG_T = 107, DIALOG_B = 117, DIALOG_BUTTON = 108, MENU_BG = 118, LEVEL_BG = 119;
+    private final char MENU_LOGO = 97, MENU_BG_STARS = 98;
+    private int menuLogoHeight, menuLogoY, menuBGStarsHeight;
     private int dialogBlock, dialogHalfBlock, dialogButtonHalfWidth, dialogButtonHalfHeight;
     private int messageTextSize, buttonTextSize;
     private boolean exitAppButtonPressed = false;
@@ -312,6 +314,9 @@ public class MainActivity extends AppCompatActivity {
         messageTextSize = dialogBlock + (dialogHalfBlock / 4);
         buttonTextSize = dialogBlock;
         dialogWidth = 24;
+        menuLogoHeight = (int)(screenWidth * 0.42f);
+        menuLogoY = (menuButtonHalfSize * 2) - (menuButtonHalfSize / 2);
+        menuBGStarsHeight = (int)(screenWidth * 0.5413f);
 
         dialogYesButtonX = ((screenWidth - (dialogBlock * dialogWidth)) / 2) + ((dialogWidth - 2) * dialogBlock) - dialogButtonHalfWidth;
         dialogNoButtonX = ((screenWidth - (dialogBlock * dialogWidth)) / 2) + ((2 * dialogBlock) + dialogButtonHalfWidth);
@@ -1929,8 +1934,8 @@ public class MainActivity extends AppCompatActivity {
                             if (!exitAppButtonPressed) {
                                 if (touchX >= (screenWidth / 2) - menuButtonHalfSize &&
                                         touchX <= (screenWidth / 2) + menuButtonHalfSize &&
-                                        touchY >= (screenHeight / 2) - menuButtonHalfSize &&
-                                        touchY <= (screenHeight / 2) + menuButtonHalfSize) { // play
+                                        touchY >= (screenHeight - (menuBGStarsHeight / 2)) - menuButtonHalfSize &&
+                                        touchY <= (screenHeight - (menuBGStarsHeight / 2)) + menuButtonHalfSize) { // play
                                     audio.play(audioClick, false, now);
                                     levelButtonPressed = 0;
                                     // TODO should align with the last reached level
@@ -4167,6 +4172,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void drawMenu() {
         drawAppTextures(MENU_BG, 0, 0, null);
+        drawAppTextures(MENU_LOGO, 0, menuLogoY, null);
+        drawAppTextures(MENU_BG_STARS, 0, screenHeight - menuBGStarsHeight, null);
+
         switch (updateStatus) {
             case UPD_NOT_STARTED :
                 if (!exitAppButtonPressed) {
@@ -4177,7 +4185,8 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case UPD_DONE :
                 if (!exitAppButtonPressed) {
-                    drawAppTextures(PLAY_BUTTON, screenWidth / 2, screenHeight / 2, null);
+                    drawAppTextures(PLAY_BUTTON, screenWidth / 2, screenHeight - (menuBGStarsHeight / 2), null);
+                    drawText("Play", 40, screenWidth / 2, screenHeight - (menuBGStarsHeight / 2) + (menuButtonHalfSize / 6), 0xffffffff, 0xffb27e00, 15, Paint.Align.CENTER);
                     drawAppTextures(CLOSE_BUTTON, screenWidth - (menuButtonHalfSize * 2), menuButtonHalfSize * 2, null);
                 } else {
                     drawDialog("Close the app now?", "Yes", "No");
@@ -4285,14 +4294,15 @@ public class MainActivity extends AppCompatActivity {
                     if (lN <= highestLevel) {
                         currentRank = achievedRanks[lN - 1];
                         drawAppTextures(LEVEL_BUTTON, screenWidth / 2, (dly * levelButtonArea) + levelButtonHalfArea - lsy, null);
-                        drawText(lN + "", 50, screenWidth / 2, (dly * levelButtonArea) + levelButtonHalfArea - lsy + (menuButtonHalfSize / 2), 0xFFFFFFFF, 0xFF2F4F4E, 0, Paint.Align.CENTER);
+                        drawText(lN + "", 50, screenWidth / 2, (dly * levelButtonArea) + levelButtonHalfArea - lsy, 0xFFFFFFFF, 0xff518f84, 20, Paint.Align.CENTER);
+                        drawText(lN + "", 50, screenWidth / 2, (dly * levelButtonArea) + levelButtonHalfArea - lsy, 0xFFFFFFFF, 0xff000000, 5, Paint.Align.CENTER);
                     } else {
                         drawAppTextures(LEVEL_BLOCKED_BUTTON, screenWidth / 2, (dly * levelButtonArea) + levelButtonHalfArea - lsy, null);
                     }
                 } else {
                     drawAppTextures(LEVEL_COMING_SOON, screenWidth / 2, (dly * levelButtonArea) + levelButtonHalfArea - lsy, null);
-                    drawText("Coming", 24, screenWidth / 2, (dly * levelButtonArea) + levelButtonHalfArea - (menuButtonHalfSize / 3) - lsy, 0xDDFFFFFF, 0xFFFFFFFF, 0, Paint.Align.CENTER);
-                    drawText("soon", 24, screenWidth / 2, (dly * levelButtonArea) + levelButtonHalfArea - lsy, 0xDDFFFFFF, 0xFFFFFFFF, 0, Paint.Align.CENTER);
+                    drawText("Coming", 24, screenWidth / 2, (dly * levelButtonArea) + levelButtonHalfArea - (levelButtonHalfArea / 4) - lsy, 0xDDFFFFFF, 0x80518f84, 15, Paint.Align.CENTER);
+                    drawText("soon", 24, screenWidth / 2, (dly * levelButtonArea) + levelButtonHalfArea - (levelButtonHalfArea / 20) - lsy, 0xDDFFFFFF, 0x80518f84, 15, Paint.Align.CENTER);
                 }
                 lN ++;
             }
@@ -4859,7 +4869,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void drawDialogButton(int ddbx, int ddby, String bt) {
         drawAppTextures(DIALOG_BUTTON, ddbx, ddby, null);
-        drawText(bt, buttonTextSize, ddbx, ddby + (buttonTextSize / 4), 0xFF242609, 0xFF000000, 2, Paint.Align.CENTER);
+        drawText(bt, buttonTextSize, ddbx, ddby + (buttonTextSize / 4), 0xffffffff, 0xffc88818, 15, Paint.Align.CENTER);
     }
 
     private void drawText(String text, int size, int x, int y, int fColor, int strokeColor, int stroke, Paint.Align alignment) {
@@ -4888,8 +4898,8 @@ public class MainActivity extends AppCompatActivity {
     private void drawAppTextures(char sprite, int sx, int sy, Paint paint) {
         switch (sprite) {
             case PLAY_BUTTON :
-                rectOrigin.set(0, 0, 99, 99);
-                rectDestiny.set(sx - menuButtonHalfSize, sy - menuButtonHalfSize, sx + menuButtonHalfSize, sy + menuButtonHalfSize);
+                rectOrigin.set(0, 50, 99, 99);
+                rectDestiny.set(sx - dialogButtonHalfWidth, sy - dialogButtonHalfHeight, sx + dialogButtonHalfWidth, sy + dialogButtonHalfHeight);
                 break;
             case CLOSE_BUTTON :
                 rectOrigin.set(200, 0, 299, 99);
@@ -4944,16 +4954,24 @@ public class MainActivity extends AppCompatActivity {
                 rectDestiny.set(sx, sy, sx + dialogBlock, sy + dialogBlock);
                 break;
             case DIALOG_BUTTON :
-                rectOrigin.set(100, 350, 199, 399);
+                rectOrigin.set(0, 0, 99, 49);
                 rectDestiny.set(sx - dialogButtonHalfWidth, sy - dialogButtonHalfHeight, sx + dialogButtonHalfWidth, sy + dialogButtonHalfHeight);
                 break;
             case MENU_BG :
-                rectOrigin.set(300, 0, 487, 249);
+                rectOrigin.set(489, 1, 497, 510);
                 rectDestiny.set(sx, sy, sx + screenWidth, sy + screenHeight);
                 break;
             case LEVEL_BG :
-                rectOrigin.set(300, 250, 487, 499);
+                rectOrigin.set(501, 1, 510, 510);
                 rectDestiny.set(sx, sy, sx + screenWidth, sy + screenHeight);
+                break;
+            case MENU_LOGO :
+                rectOrigin.set(0, 500, 399, 669);
+                rectDestiny.set(sx, sy, sx + screenWidth, sy + menuLogoHeight);
+                break;
+            case MENU_BG_STARS :
+                rectOrigin.set(300, 0, 449, 80);
+                rectDestiny.set(sx, sy, sx + screenWidth, sy + menuBGStarsHeight);
                 break;
         }
         c.drawBitmap(appTextures, rectOrigin, rectDestiny, paint);
