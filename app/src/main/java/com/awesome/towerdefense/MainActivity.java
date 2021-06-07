@@ -84,8 +84,9 @@ public class MainActivity extends AppCompatActivity {
     private final char PLAY_BUTTON = 32, LEVEL_BUTTON = 33, CLOSE_BUTTON = 34, LEVEL_BLOCKED_BUTTON = 112, LEVEL_COMING_SOON = 120;
     private final char DIALOG_TL = 100, DIALOG_TR = 101, DIALOG_BL = 102, DIALOG_BR = 103;
     private final char DIALOG_BG = 105, DIALOG_L = 106, DIALOG_R = 116, DIALOG_T = 107, DIALOG_B = 117, DIALOG_BUTTON = 108, MENU_BG = 118, LEVEL_BG = 119;
-    private final char MENU_LOGO = 97, MENU_BG_STARS = 98;
+    private final char MENU_LOGO = 97, MENU_BG_STARS = 98, MENU_BG_PICTURE = 99;
     private int menuLogoHeight, menuLogoY, menuBGStarsHeight;
+    private int menuBGPictureY, menuBGPictureHeight;
     private int dialogBlock, dialogHalfBlock, dialogButtonHalfWidth, dialogButtonHalfHeight;
     private int messageTextSize, buttonTextSize;
     private boolean exitAppButtonPressed = false;
@@ -317,6 +318,8 @@ public class MainActivity extends AppCompatActivity {
         menuLogoHeight = (int)(screenWidth * 0.42f);
         menuLogoY = (menuButtonHalfSize * 2) - (menuButtonHalfSize / 2);
         menuBGStarsHeight = (int)(screenWidth * 0.5413f);
+        menuBGPictureHeight = (int)(screenWidth * 1.148f);
+        menuBGPictureY = (int)(screenHeight * 0.22f);
 
         dialogYesButtonX = ((screenWidth - (dialogBlock * dialogWidth)) / 2) + ((dialogWidth - 2) * dialogBlock) - dialogButtonHalfWidth;
         dialogNoButtonX = ((screenWidth - (dialogBlock * dialogWidth)) / 2) + ((2 * dialogBlock) + dialogButtonHalfWidth);
@@ -4172,8 +4175,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void drawMenu() {
         drawAppTextures(MENU_BG, 0, 0, null);
-        drawAppTextures(MENU_LOGO, 0, menuLogoY, null);
         drawAppTextures(MENU_BG_STARS, 0, screenHeight - menuBGStarsHeight, null);
+        drawAppTextures(MENU_BG_PICTURE, 0, menuBGPictureY, null);
+        drawAppTextures(MENU_LOGO, 0, menuLogoY, null);
 
         switch (updateStatus) {
             case UPD_NOT_STARTED :
@@ -4958,11 +4962,11 @@ public class MainActivity extends AppCompatActivity {
                 rectDestiny.set(sx - dialogButtonHalfWidth, sy - dialogButtonHalfHeight, sx + dialogButtonHalfWidth, sy + dialogButtonHalfHeight);
                 break;
             case MENU_BG :
-                rectOrigin.set(489, 1, 497, 510);
+                rectOrigin.set(463, 1, 472, 510);
                 rectDestiny.set(sx, sy, sx + screenWidth, sy + screenHeight);
                 break;
             case LEVEL_BG :
-                rectOrigin.set(501, 1, 510, 510);
+                rectOrigin.set(477, 1, 486, 510);
                 rectDestiny.set(sx, sy, sx + screenWidth, sy + screenHeight);
                 break;
             case MENU_LOGO :
@@ -4972,6 +4976,10 @@ public class MainActivity extends AppCompatActivity {
             case MENU_BG_STARS :
                 rectOrigin.set(300, 0, 449, 80);
                 rectDestiny.set(sx, sy, sx + screenWidth, sy + menuBGStarsHeight);
+                break;
+            case MENU_BG_PICTURE :
+                rectOrigin.set(488, 0, 1023, 614);
+                rectDestiny.set(sx, sy, sx + screenWidth, sy + menuBGPictureHeight);
                 break;
         }
         c.drawBitmap(appTextures, rectOrigin, rectDestiny, paint);
