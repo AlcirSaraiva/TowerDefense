@@ -4298,7 +4298,7 @@ public class MainActivity extends AppCompatActivity {
                     if (lN <= highestLevel) {
                         currentRank = achievedRanks[lN - 1];
                         drawAppTextures(LEVEL_BUTTON, screenWidth / 2, (dly * levelButtonArea) + levelButtonHalfArea - lsy, null);
-                        drawText(lN + "", 50, screenWidth / 2, (dly * levelButtonArea) + levelButtonHalfArea - lsy, 0xFFFFFFFF, 0xff518f84, 20, Paint.Align.CENTER);
+                        drawText(lN + "", 50, screenWidth / 2, (dly * levelButtonArea) + levelButtonHalfArea - lsy, 0xFFFFFFFF, 0xff518f84, 15, Paint.Align.CENTER);
                         drawText(lN + "", 50, screenWidth / 2, (dly * levelButtonArea) + levelButtonHalfArea - lsy, 0xFFFFFFFF, 0xff000000, 5, Paint.Align.CENTER);
                     } else {
                         drawAppTextures(LEVEL_BLOCKED_BUTTON, screenWidth / 2, (dly * levelButtonArea) + levelButtonHalfArea - lsy, null);
@@ -4873,7 +4873,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void drawDialogButton(int ddbx, int ddby, String bt) {
         drawAppTextures(DIALOG_BUTTON, ddbx, ddby, null);
-        drawText(bt, buttonTextSize, ddbx, ddby + (buttonTextSize / 4), 0xffffffff, 0xffc88818, 15, Paint.Align.CENTER);
+        drawText(bt, buttonTextSize, ddbx, ddby + (buttonTextSize / 4), 0xffffffff, 0xffc88818, 10, Paint.Align.CENTER);
     }
 
     private void drawText(String text, int size, int x, int y, int fColor, int strokeColor, int stroke, Paint.Align alignment) {
