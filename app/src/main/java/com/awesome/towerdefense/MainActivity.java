@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
     private int touchInitY;
     private int menuButtonHalfSize;
     private final char PLAY_BUTTON = 32, LEVEL_BUTTON = 33, CLOSE_BUTTON = 34, LEVEL_BLOCKED_BUTTON = 112, LEVEL_COMING_SOON = 120;
-    private final char DIALOG_TL = 100, DIALOG_TR = 101, DIALOG_BL = 102, DIALOG_BR = 103;
+    private final char DIALOG_TL = 100, DIALOG_TR = 101, DIALOG_BL = 102, DIALOG_BR = 103, DIALOG_PICTURE = 104;
     private final char DIALOG_BG = 105, DIALOG_L = 106, DIALOG_R = 116, DIALOG_T = 107, DIALOG_B = 117, DIALOG_BUTTON = 108, MENU_BG = 118, LEVEL_BG = 119;
     private final char MENU_LOGO = 97, MENU_BG_STARS = 98, MENU_BG_PICTURE = 99;
     private int menuLogoHeight, menuLogoY, menuBGStarsHeight;
@@ -4184,7 +4184,7 @@ public class MainActivity extends AppCompatActivity {
                 if (!exitAppButtonPressed) {
                     drawAppTextures(CLOSE_BUTTON, screenWidth - (menuButtonHalfSize * 2), menuButtonHalfSize * 2, null);
                 } else {
-                    drawDialog("Close the app now?", "Yes", "No");
+                    drawDialog("Close the app now?", "Yes", "No", 2);
                 }
                 break;
             case UPD_DONE :
@@ -4193,11 +4193,11 @@ public class MainActivity extends AppCompatActivity {
                     drawText("Play", 40, screenWidth / 2, screenHeight - (menuBGStarsHeight / 2) + (menuButtonHalfSize / 6), 0xffffffff, 0xffb27e00, 15, Paint.Align.CENTER);
                     drawAppTextures(CLOSE_BUTTON, screenWidth - (menuButtonHalfSize * 2), menuButtonHalfSize * 2, null);
                 } else {
-                    drawDialog("Close the app now?", "Yes", "No");
+                    drawDialog("Close the app now?", "Yes", "No", 1);
                 }
                 break;
             case UPD_CHECKING_GAME_UPDS :
-                drawDialog("Checking game updates...", "", "");
+                drawDialog("Checking game updates...", "", "", 2);
                 checkForTimedOutConnection();
                 break;
             case UPD_READY_TO_CHECK_LEVELS :
@@ -4207,11 +4207,11 @@ public class MainActivity extends AppCompatActivity {
                 updateStatus = UPD_CHECKING_LEVELS;
                 break;
             case UPD_CHECKING_LEVELS :
-                drawDialog("Checking levels updates...", "", "");
+                drawDialog("Checking levels updates...", "", "", 2);
                 checkForTimedOutConnection();
                 break;
             case UPD_READY_TO_DOWNLOAD :
-                drawDialog("Ready do download", "", "");
+                drawDialog("Ready do download", "", "", 2);
                 if (filesToDownload != null) {
                     numberOfFilesToUpdate = filesToDownload.size();
                     if (numberOfFilesToUpdate > 0) deleteLevelsScreenSettings("default");
@@ -4232,19 +4232,19 @@ public class MainActivity extends AppCompatActivity {
                 if (numberOfFilesToUpdate == 0) {
                     updateStatus = UPD_READY_TO_CHECK_LOCAL;
                 } else if (numberOfFilesToUpdate > 1) {
-                    drawDialog("Downloading " + numberOfFilesToUpdate + " updates...", "", "");
+                    drawDialog("Downloading " + numberOfFilesToUpdate + " updates...", "", "", 2);
                 } else {
-                    drawDialog("Downloading " + numberOfFilesToUpdate + " update...", "", "");
+                    drawDialog("Downloading " + numberOfFilesToUpdate + " update...", "", "", 2);
                 }
                 checkForTimedOutConnection();
                 break;
             case UPD_READY_TO_CHECK_LOCAL :
                 localCheckingTime = now;
-                drawDialog("Checking local files...", "", "");
+                drawDialog("Checking local files...", "", "", 2);
                 updateStatus = UPD_CHECKING_LOCAL;
                 break;
             case UPD_CHECKING_LOCAL :
-                drawDialog("Checking local files...", "", "");
+                drawDialog("Checking local files...", "", "", 2);
                 if (filesToDownload != null) {
                     if (filesToDownload.size() == 0) {
                         if (now - localCheckingTime > 1000) {
@@ -4277,13 +4277,13 @@ public class MainActivity extends AppCompatActivity {
                 }
                 break;
             case UPD_LOCAL_MISSING :
-                drawDialog("There are no levels installed", "Exit", "");
+                drawDialog("There are no levels installed", "Exit", "", 1);
                 break;
             case UPD_ERROR_OFFLINE :
-                drawDialog("The app needs to look for updates.\nPlease, check your connection.", "Retry", "Cancel");
+                drawDialog("The app needs to look for updates.\nPlease, check your connection.", "Retry", "Cancel", 1);
                 break;
             case UPD_ERROR_OTHER :
-                drawDialog("Failed.", "Continue", "");
+                drawDialog("Failed.", "Continue", "", 1);
                 break;
         }
     }
@@ -4312,7 +4312,7 @@ public class MainActivity extends AppCompatActivity {
             }
             drawAppTextures(CLOSE_BUTTON, screenWidth - (menuButtonHalfSize * 2), menuButtonHalfSize * 2, null);
         } else {
-            drawDialog(levelTitle[levelButtonPressed - 1] + "\n\n" + levelDescription[levelButtonPressed - 1], "Play", "Cancel");
+            drawDialog(levelTitle[levelButtonPressed - 1] + "\n\n" + levelDescription[levelButtonPressed - 1], "Play", "Cancel", 1);
         }
     }
 
@@ -4780,11 +4780,11 @@ public class MainActivity extends AppCompatActivity {
             // close
             drawSprite(GAME_CLOSE_BUTTON, screenWidth - (menuButtonHalfSize * 2), menuButtonHalfSize * 2, null);
         } else if (!alive) {
-            drawDialog("You have lost.  8_<(", "Retry", "Quit");
+            drawDialog("You have lost.  8_<(", "Retry", "Quit", 1);
         } else if (won && now - winTime > winDelay) {
-            drawDialog("You won.  8<D", "\\o/", "");
+            drawDialog("You won.  8<D", "\\o/", "", 1);
         } else if (gameClosePressed) {
-            drawDialog("Want to leave the game?", "Leave", "Continue");
+            drawDialog("Want to leave the game?", "Leave", "Continue", 4);
         }
 
         frameCounter ++;
@@ -4803,12 +4803,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void drawDialog(String text, String yes, String no) {
+    private void drawDialog(String text, String yes, String no, int dialogType) {
         ArrayList<String> textLines = new ArrayList<>();
         int charCounter = 0;
         int columnCounter = 0;
         int lineCounter = 0;
         int newLineStart = 0;
+        // breaks text
         while (charCounter < text.length()) {
             if (columnCounter == (dialogWidth * 2) - 9 || text.charAt(charCounter) == '\n' || charCounter >= text.length() - 1) {
                 if (textLines.size() == 0) {
@@ -4824,14 +4825,33 @@ public class MainActivity extends AppCompatActivity {
             columnCounter ++;
         }
         textLines.set(textLines.size() -1, textLines.get(textLines.size() -1) + text.charAt(text.length() - 1));
+        // if no buttons, resize dialog
         if (yes.isEmpty() && no.isEmpty()) {
             dialogHeight = lineCounter + (lineCounter / 4 * 3) + 4;
         } else {
             dialogHeight = lineCounter + (lineCounter / 4 * 3) + 11;
         }
-
+        if (dialogType >= 3 && dialogType <= 5) { // has image, compensate size
+            dialogHeight += 12;
+        }
         int xx = (screenWidth - (dialogBlock * dialogWidth)) / 2;
-        int yy = (screenHeight - (dialogBlock * dialogHeight)) / 2;
+        int yy = dialogBlock * 4; // top no image
+        switch (dialogType) {
+            case 1 : // center no image
+                yy = (screenHeight - (dialogBlock * dialogHeight)) / 2;
+                break;
+            case 2 : // bottom no image
+                yy = (screenHeight - (dialogBlock * dialogHeight)) - (dialogBlock * 4);
+                break;
+            case 3 : // top with image
+                break;
+            case 4 : // center with image
+                yy = (screenHeight - (dialogBlock * dialogHeight) - (dialogBlock * 10)) / 2;
+                break;
+            case 5 : // bottom with image
+                break;
+        }
+        // dialog window
         char whichSprite;
         for (int jj = 0; jj < dialogHeight; jj ++) {
             for (int ii = 0; ii < dialogWidth; ii ++) {
@@ -4861,12 +4881,16 @@ public class MainActivity extends AppCompatActivity {
                 drawAppTextures(whichSprite, xx + (ii * dialogBlock), yy + (jj * dialogBlock), null);
             }
         }
-
+        // image
+        if (dialogType >= 3 && dialogType <= 5) {
+            drawSprite(DIALOG_PICTURE, xx + (dialogBlock * 2), yy + (dialogBlock * (textLines.size() + 3)), null);
+        }
+        // text
         for (int tl = 0; tl < textLines.size(); tl ++) {
             drawText(textLines.get(tl), messageTextSize, xx + (dialogBlock * 2), yy + (dialogBlock * 2) + (dialogBlock / 6 * 5) + (tl * messageTextSize / 2 * 3), 0xFFFFFFFF, 0xFF0000FF, 0, null);
         }
-
-        dialogButtonY = ((screenHeight - (dialogBlock * dialogHeight)) / 2) + ((dialogHeight - 2) * dialogBlock) - dialogButtonHalfHeight;
+        // button(s)
+        dialogButtonY = yy + ((dialogHeight - 2) * dialogBlock) - dialogButtonHalfHeight;
         if (!yes.isEmpty()) drawDialogButton(dialogYesButtonX, dialogButtonY, yes);
         if (!no.isEmpty()) drawDialogButton(dialogNoButtonX, dialogButtonY, no);
     }
@@ -4988,7 +5012,7 @@ public class MainActivity extends AppCompatActivity {
     private void drawSprite(char sprite, int sx, int sy, Paint paint) {
         switch (sprite) {
             case GAME_CLOSE_BUTTON :
-                rectOrigin.set(900, 250, 999, 349);
+                rectOrigin.set(0, 1050, 99, 1149);
                 rectDestiny.set(sx - menuButtonHalfSize, sy - menuButtonHalfSize, sx + menuButtonHalfSize, sy + menuButtonHalfSize);
                 break;
             case HEART :
@@ -5004,11 +5028,11 @@ public class MainActivity extends AppCompatActivity {
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case TOWER_MENU :
-                rectOrigin.set(950, 0, 999, 199);
+                rectOrigin.set(850, 150, 899, 349);
                 rectDestiny.set(sx, sy - towerMenuHalfHeight, sx + towerMenuWidth, sy + towerMenuHalfHeight);
                 break;
             case UPGRADE_MENU :
-                rectOrigin.set(1450 + (upMenuY * 50), upMenuX * 200, 1499 + (upMenuY * 50), 199 + (upMenuX * 200));
+                rectOrigin.set(450 + (upMenuY * 50), 1150 + (upMenuX * 200), 499 + (upMenuY * 50), 1349 + (upMenuX * 200));
                 rectDestiny.set(sx, sy - upgradeMenuHalfHeight, sx + upgradeMenuWidth, sy + upgradeMenuHalfHeight);
                 break;
             case CONFIRMATION :
@@ -5020,35 +5044,35 @@ public class MainActivity extends AppCompatActivity {
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case TOWER1 :
-                rectOrigin.set(1000 + (towerUpLevel * 50), towerShootingSprite * 200, 1049 + (towerUpLevel * 50), 49 + (towerShootingSprite * 200));
+                rectOrigin.set(towerUpLevel * 50, 1150 + (towerShootingSprite * 200), 49 + (towerUpLevel * 50), 1199 + (towerShootingSprite * 200));
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case TOWER2 :
-                rectOrigin.set(1000 + (towerUpLevel * 50), 50 + (towerShootingSprite * 200), 1049 + (towerUpLevel * 50), 99 + (towerShootingSprite * 200));
+                rectOrigin.set(towerUpLevel * 50, 1200 + (towerShootingSprite * 200), 49 + (towerUpLevel * 50), 1249 + (towerShootingSprite * 200));
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case TOWER3 :
-                rectOrigin.set(1000 + (towerUpLevel * 50), 100 + (towerShootingSprite * 200), 1049 + (towerUpLevel * 50), 149 + (towerShootingSprite * 200));
+                rectOrigin.set(towerUpLevel * 50, 1250 + (towerShootingSprite * 200), 49 + (towerUpLevel * 50), 1299 + (towerShootingSprite * 200));
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case TOWER4 :
-                rectOrigin.set(1000 + (towerUpLevel * 50), 150 + (towerShootingSprite * 200), 1049 + (towerUpLevel * 50), 199 + (towerShootingSprite * 200));
+                rectOrigin.set(towerUpLevel * 50, 1300 + (towerShootingSprite * 200), 49 + (towerUpLevel * 50), 1349 + (towerShootingSprite * 200));
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case TOWER1_D :
-                rectOrigin.set(1950, 0, 1999, 49);
+                rectOrigin.set(850, 400, 899, 449);
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case TOWER2_D :
-                rectOrigin.set(1950, 50, 1999, 99);
+                rectOrigin.set(850, 450, 899, 499);
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case TOWER3_D :
-                rectOrigin.set(1950, 100, 1999, 149);
+                rectOrigin.set(850, 500, 899, 549);
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case TOWER4_D :
-                rectOrigin.set(1950, 150, 1999, 199);
+                rectOrigin.set(850, 550, 899, 599);
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case EMPTY1 :
@@ -5168,43 +5192,43 @@ public class MainActivity extends AppCompatActivity {
                 rectDestiny.set(sx - enemyCurrentHalfSize, sy - enemyCurrentSize, sx + enemyCurrentHalfSize, sy);
                 break;
             case ENEMY0_SHOT :
-                rectOrigin.set(spriteNumber * 50, 1000, 49 + (spriteNumber * 50), 1049);
+                rectOrigin.set(spriteNumber * 50, 550, 49 + (spriteNumber * 50), 599);
                 rectDestiny.set(sx - enemyDefaultHalfSize, sy - enemyDefaultSize, sx + enemyDefaultHalfSize, sy);
                 break;
             case ENEMY1_SHOT :
-                rectOrigin.set(spriteNumber * 50, 1050, 49 + (spriteNumber * 50), 1099);
+                rectOrigin.set(spriteNumber * 50, 600, 49 + (spriteNumber * 50), 649);
                 rectDestiny.set(sx - enemyDefaultHalfSize, sy - enemyDefaultSize, sx + enemyDefaultHalfSize, sy);
                 break;
             case ENEMY2_SHOT :
-                rectOrigin.set(spriteNumber * 50, 1100, 49 + (spriteNumber * 50), 1149);
+                rectOrigin.set(spriteNumber * 50, 650, 49 + (spriteNumber * 50), 699);
                 rectDestiny.set(sx - enemyDefaultHalfSize, sy - enemyDefaultSize, sx + enemyDefaultHalfSize, sy);
                 break;
             case ENEMY3_SHOT :
-                rectOrigin.set(spriteNumber * 50, 1150, 49 + (spriteNumber * 50), 1199);
+                rectOrigin.set(spriteNumber * 50, 700, 49 + (spriteNumber * 50), 749);
                 rectDestiny.set(sx - enemyDefaultHalfSize, sy - enemyDefaultSize, sx + enemyDefaultHalfSize, sy);
                 break;
             case ENEMY4_SHOT :
-                rectOrigin.set(spriteNumber * 50, 1200, 49 + (spriteNumber * 50), 1249);
+                rectOrigin.set(spriteNumber * 50, 750, 49 + (spriteNumber * 50), 799);
                 rectDestiny.set(sx - enemyDefaultHalfSize, sy - enemyDefaultSize, sx + enemyDefaultHalfSize, sy);
                 break;
             case ENEMY5_SHOT :
-                rectOrigin.set(spriteNumber * 50, 1250, 49 + (spriteNumber * 50), 1299);
+                rectOrigin.set(spriteNumber * 50, 800, 49 + (spriteNumber * 50), 849);
                 rectDestiny.set(sx - enemyDefaultHalfSize, sy - enemyDefaultSize, sx + enemyDefaultHalfSize, sy);
                 break;
             case ENEMY6_SHOT :
-                rectOrigin.set(spriteNumber * 50, 1300, 49 + (spriteNumber * 50), 1349);
+                rectOrigin.set(spriteNumber * 50, 850, 49 + (spriteNumber * 50), 899);
                 rectDestiny.set(sx - enemyDefaultHalfSize, sy - enemyDefaultSize, sx + enemyDefaultHalfSize, sy);
                 break;
             case ENEMY7_SHOT :
-                rectOrigin.set(spriteNumber * 50, 1350, 49 + (spriteNumber * 50), 1399);
+                rectOrigin.set(spriteNumber * 50, 900, 49 + (spriteNumber * 50), 949);
                 rectDestiny.set(sx - enemyDefaultHalfSize, sy - enemyDefaultSize, sx + enemyDefaultHalfSize, sy);
                 break;
             case ENEMY8_SHOT :
-                rectOrigin.set(spriteNumber * 50, 1400, 49 + (spriteNumber * 50), 1449);
+                rectOrigin.set(spriteNumber * 50, 950, 49 + (spriteNumber * 50), 999);
                 rectDestiny.set(sx - enemyDefaultHalfSize, sy - enemyDefaultSize, sx + enemyDefaultHalfSize, sy);
                 break;
             case ENEMY9_SHOT :
-                rectOrigin.set(spriteNumber * 50, 1450, 49 + (spriteNumber * 50), 1499);
+                rectOrigin.set(spriteNumber * 50, 1000, 49 + (spriteNumber * 50), 1049);
                 rectDestiny.set(sx - enemyDefaultHalfSize, sy - enemyDefaultSize, sx + enemyDefaultHalfSize, sy);
                 break;
             case LIFE_BG :
@@ -5220,16 +5244,20 @@ public class MainActivity extends AppCompatActivity {
                 rectDestiny.set(sx - halfLifeBarInPX + 1, sy + 1, sx - halfLifeBarInPX + lifeInPX - 2, sy + lifeBarHeight - 1);
                 break;
             case TOWER_SHOTS :
-                rectOrigin.set(1000 + (whichShotX * 50), 1000 + (whichShotY * 50) + (whichShotSprite * 200), 1049 + (whichShotX * 50), 1049 + (whichShotY * 50) + (whichShotSprite * 200));
+                rectOrigin.set(400 + (whichShotX * 50), 550 + (whichShotY * 50) + (whichShotSprite * 200), 449 + (whichShotX * 50), 599 + (whichShotY * 50) + (whichShotSprite * 200));
                 rectDestiny.set(sx - towerShotsHalfSize, sy - towerShotsHalfSize, sx + towerShotsHalfSize, sy + towerShotsHalfSize);
                 break;
             case TOWER_UNAVAILABLE :
-                rectOrigin.set(950, 200, 999, 249);
+                rectOrigin.set(850, 350, 899, 399);
                 rectDestiny.set(sx, sy, sx + towerMenuWidth, sy + towerMenuWidth);
                 break;
             case TOWER_UPGRADE_UNAVAILABLE :
-                rectOrigin.set(1900,  upMenuX * 200, 1949, 199 + (upMenuX * 200));
+                rectOrigin.set(900,  1150 + (upMenuX * 200), 949, 1349 + (upMenuX * 200));
                 rectDestiny.set(sx, sy - upgradeMenuHalfHeight, sx + upgradeMenuWidth, sy + upgradeMenuHalfHeight);
+                break;
+            case DIALOG_PICTURE :
+                rectOrigin.set(0,  1750, 449, 2047);
+                rectDestiny.set(sx, sy, sx + ((dialogWidth - 4) * dialogBlock), sy + (int)((dialogWidth - 2) * dialogBlock * 0.6f));
                 break;
         }
         c.drawBitmap(gameTextures, rectOrigin, rectDestiny, paint);
