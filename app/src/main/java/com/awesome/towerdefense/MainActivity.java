@@ -802,10 +802,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
 
-                    /*for (int g = 0; g < list.size(); g ++) { // just prints the generated lists
-                        System.out.println(TAG + list.get(g) + " - " + levelNames.get(g) + " - " + levelDescriptions.get(g));
-                    }*/
-
                 } catch (Exception e) {
                     result = false;
                     e.printStackTrace();
@@ -1016,6 +1012,9 @@ public class MainActivity extends AppCompatActivity {
                             case "messagetext" :
                                 lineParts = tempLine.split("=");
                                 if (lineParts.length > 1) {
+                                    if (lineParts[1].charAt(0) == ' ' && lineParts[1].length() > 1) {
+                                        lineParts[1] = lineParts[1].substring(1);
+                                    }
                                     levelMessageText = lineParts[1];
                                 } else {
                                     levelMessageText = " ";
@@ -2115,14 +2114,15 @@ public class MainActivity extends AppCompatActivity {
                 case "up" :
                     if (!fieldMoved && alive && !gameClosePressed && !won) {
                         if (touchX >= screenWidth - (menuButtonHalfSize * 3) &&
-                                touchY <= menuButtonHalfSize * 3) { // close
+                                touchY <= menuButtonHalfSize * 3 &&
+                                (levelMessageShown || currWave != levelMessageWave - 1)) { // close
                             audio.play(audioClick, false, now);
                             gameClosePressed = true;
-                        } else if (!levelMessageShown) {
+                        } else if (!levelMessageShown && currWave == levelMessageWave - 1) {
+                            waveStartTime = now;
                             if (yesButtonPressed()) {
                                 levelMessageShown = true;
                             }
-                            waveStartTime = now;
                         } else if (towerMenu) { // put a tower in the field
                             if (touchX <= towerMenuWidth &&
                                     touchY >= (screenHeight / 2) - towerMenuHalfHeight &&
@@ -4341,9 +4341,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void drawGame() {
         drawFieldAndTowers();
-        if (!gameClosePressed && !won && levelMessageShown) {
+        if (!gameClosePressed && !won && (levelMessageShown || currWave != levelMessageWave - 1)) {
             drawWave();
-        } else if (!gameClosePressed && levelMessageShown) {
+        } else if (!gameClosePressed && (levelMessageShown || currWave != levelMessageWave - 1)) {
             drawDeadEnemies();
         }
         drawGameUI();
@@ -4706,11 +4706,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void drawGameUI() {
         if (alive && !gameClosePressed && !won) {
-            if (!levelMessageShown) {
+            if (!levelMessageShown && currWave == levelMessageWave - 1) {
                 drawDialog(levelMessageText, "Ok", "", 4);
             } else if (towerMenu) {
                 drawSprite(TOWER_MENU, 0, screenHeight / 2, null);
-
                 // unavailable tower or price
                 if (!towerAvailable.get(TOWER1)) {
                     drawSprite(TOWER_UNAVAILABLE, 0, (screenHeight / 2) - towerMenuHalfHeight, null);
@@ -4794,7 +4793,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     drawText("last wave", 35, 100, 180, 0xFF00FF00, 0xFF000000, 4, Paint.Align.LEFT);
                 }
-            } else if (levelMessageShown) {
+            } else if (levelMessageShown || currWave != levelMessageWave - 1) {
                 if (currWave + 1 < waves) {
                     drawText("wave " + (currWave + 1) + " of " + waves + " in " + ((waveStartDelay / 1000) - (now - waveStartTime) / 1000) + " seconds", 35, 100, 180, 0xFF00FF00, 0xFF000000, 4, Paint.Align.LEFT);
                 } else {
@@ -4803,7 +4802,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             // close
-            drawSprite(GAME_CLOSE_BUTTON, screenWidth - (menuButtonHalfSize * 2), menuButtonHalfSize * 2, null);
+            if (levelMessageShown || currWave != levelMessageWave - 1) drawSprite(GAME_CLOSE_BUTTON, screenWidth - (menuButtonHalfSize * 2), menuButtonHalfSize * 2, null);
         } else if (!alive) {
             drawDialog("You have lost.  8_<(", "Retry", "Quit", 1);
         } else if (won && now - winTime > winDelay) {
@@ -4836,20 +4835,23 @@ public class MainActivity extends AppCompatActivity {
         int newLineStart = 0;
         // breaks text
         while (charCounter < text.length()) {
-            if (columnCounter == (dialogWidth * 2) - 9 || text.charAt(charCounter) == '\n' || charCounter >= text.length() - 1) {
-                if (textLines.size() == 0) {
-                    textLines.add(" " + text.substring(newLineStart, charCounter));
-                } else {
-                    textLines.add(text.substring(newLineStart, charCounter));
-                }
+            if (columnCounter == (dialogWidth * 2) - 15 || text.charAt(charCounter) == '\n' || charCounter >= text.length() - 1) {
+                textLines.add(text.substring(newLineStart, charCounter));
                 newLineStart = charCounter;
                 columnCounter = 0;
                 lineCounter ++;
+            } else {
+                columnCounter ++;
             }
             charCounter ++;
-            columnCounter ++;
         }
         textLines.set(textLines.size() -1, textLines.get(textLines.size() -1) + text.charAt(text.length() - 1));
+        // removes spaces from beginning of lines
+        for (int tl = 0; tl < textLines.size(); tl ++) {
+            if ((textLines.get(tl).charAt(0) == '\n' || textLines.get(tl).charAt(0) == ' ') && textLines.get(tl).length() > 1) {
+                textLines.set(tl, textLines.get(tl).substring(1));
+            }
+        }
         // if no buttons, resize dialog
         if (yes.isEmpty() && no.isEmpty()) {
             dialogHeight = lineCounter + (lineCounter / 4 * 3) + 4;
@@ -4857,7 +4859,7 @@ public class MainActivity extends AppCompatActivity {
             dialogHeight = lineCounter + (lineCounter / 4 * 3) + 11;
         }
         if (dialogType >= 3 && dialogType <= 5) { // has image, compensate size
-            dialogHeight += 12;
+            dialogHeight += 13;
         }
         int xx = (screenWidth - (dialogBlock * dialogWidth)) / 2;
         int yy = dialogBlock * 4; // top no image
@@ -4908,7 +4910,7 @@ public class MainActivity extends AppCompatActivity {
         }
         // image
         if (dialogType >= 3 && dialogType <= 5) {
-            drawSprite(DIALOG_PICTURE, xx + (dialogBlock * 2), yy + (dialogBlock * (textLines.size() + 3)), null);
+            drawSprite(DIALOG_PICTURE, xx + (dialogBlock * 2), yy + (dialogBlock * (textLines.size() + 3)) + dialogBlock, null);
         }
         // text
         for (int tl = 0; tl < textLines.size(); tl ++) {
