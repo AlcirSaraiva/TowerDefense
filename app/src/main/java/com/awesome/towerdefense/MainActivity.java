@@ -200,7 +200,7 @@ public class MainActivity extends AppCompatActivity {
     private final char ENEMY0_D = 121, ENEMY1_D = 122, ENEMY2_D = 123, ENEMY3_D = 135, ENEMY4_D = 136, ENEMY5_D = 137, ENEMY6_D = 138, ENEMY7_D = 139, ENEMY8_D = 140, ENEMY9_D = 141;
     private final char ENEMY0_SHOT = 142, ENEMY1_SHOT = 143, ENEMY2_SHOT = 144, ENEMY3_SHOT = 145, ENEMY4_SHOT = 146, ENEMY5_SHOT = 147, ENEMY6_SHOT = 148, ENEMY7_SHOT = 149, ENEMY8_SHOT = 150, ENEMY9_SHOT = 151;
     private int enemyFieldBlock;
-    private String[] waveEnemies;
+    private ArrayList<String> waveEnemies;
     private int[] waveEnemyX, waveEnemyShotY;
     private int[] waveEnemySprites, waveEnemyCurrSprite;
     private float[] waveEnemyY, waveEnemySpeed, waveEnemySize;
@@ -963,6 +963,7 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean loadLevelSettings(String mod, int whichLevel) {
         boolean result = true;
+        waveEnemies = new ArrayList<>();
 
         String whichLevelTXT = "level_001.txt";
         if (whichLevel >= 100) {
@@ -997,9 +998,8 @@ public class MainActivity extends AppCompatActivity {
                     lineParts = fileTextLine.split("=");
                     if (lineParts.length > 1) {
                         switch (lineParts[0]) {
-                            case "waves" :
-                                waveEnemies = lineParts[1].split(",");
-                                waves = waveEnemies.length;
+                            case "wave" :
+                                waveEnemies.add(lineParts[1]);
                                 break;
                             case "towers" :
                                 try {
@@ -1239,6 +1239,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+        waves = waveEnemies.size();
         if (towerSize == 0 ||
                 vertTowers == 0 ||
                 levelCoins == 0 ||
@@ -2640,6 +2641,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+
         levelSettings = loadLevelSettings(installedMod, whichLevel);
         if (level != whichLevel) { // loads level textures only if not already loaded
             levelTextures = loadLevelTextures(installedMod, whichLevel);
@@ -2732,26 +2734,26 @@ public class MainActivity extends AppCompatActivity {
 
     private void setNewWave(int cw) {
         int tempI;
-        waveEnemyX = new int[waveEnemies[cw].length()];
-        waveEnemyY = new float[waveEnemies[cw].length()];
-        waveEnemyShotY = new int[waveEnemies[cw].length()];
-        waveEnemyFullLife = new int[waveEnemies[cw].length()];
-        waveEnemyCurrLife = new int[waveEnemies[cw].length()];
-        waveEnemySpeed = new float[waveEnemies[cw].length()];
-        waveEnemyReach = new int[waveEnemies[cw].length()];
-        waveEnemyAttack = new int[waveEnemies[cw].length()];
-        waveEnemyLastAttack = new long[waveEnemies[cw].length()];
-        waveEnemyAttackInterval = new long[waveEnemies[cw].length()];
-        waveEnemySprites = new int[waveEnemies[cw].length()];
-        waveEnemyCurrSprite = new int[waveEnemies[cw].length()];
-        waveEnemySpriteInterval = new long[waveEnemies[cw].length()];
-        waveEnemyLastSprite = new long[waveEnemies[cw].length()];
-        waveEnemyHeartWeight = new int[waveEnemies[cw].length()];
-        waveEnemyTowerWeakness = new char[waveEnemies[cw].length()];
-        waveEnemyLevelWeakness = new char[waveEnemies[cw].length()];
-        waveEnemyPayment = new int[waveEnemies[cw].length()];
-        waveEnemySize = new float[waveEnemies[cw].length()];
-        waveEnemyMoving = new boolean[waveEnemies[cw].length()];
+        waveEnemyX = new int[waveEnemies.get(cw).length()];
+        waveEnemyY = new float[waveEnemies.get(cw).length()];
+        waveEnemyShotY = new int[waveEnemies.get(cw).length()];
+        waveEnemyFullLife = new int[waveEnemies.get(cw).length()];
+        waveEnemyCurrLife = new int[waveEnemies.get(cw).length()];
+        waveEnemySpeed = new float[waveEnemies.get(cw).length()];
+        waveEnemyReach = new int[waveEnemies.get(cw).length()];
+        waveEnemyAttack = new int[waveEnemies.get(cw).length()];
+        waveEnemyLastAttack = new long[waveEnemies.get(cw).length()];
+        waveEnemyAttackInterval = new long[waveEnemies.get(cw).length()];
+        waveEnemySprites = new int[waveEnemies.get(cw).length()];
+        waveEnemyCurrSprite = new int[waveEnemies.get(cw).length()];
+        waveEnemySpriteInterval = new long[waveEnemies.get(cw).length()];
+        waveEnemyLastSprite = new long[waveEnemies.get(cw).length()];
+        waveEnemyHeartWeight = new int[waveEnemies.get(cw).length()];
+        waveEnemyTowerWeakness = new char[waveEnemies.get(cw).length()];
+        waveEnemyLevelWeakness = new char[waveEnemies.get(cw).length()];
+        waveEnemyPayment = new int[waveEnemies.get(cw).length()];
+        waveEnemySize = new float[waveEnemies.get(cw).length()];
+        waveEnemyMoving = new boolean[waveEnemies.get(cw).length()];
 
         /*
         // calculates spaceAvailableForEnemies
@@ -2768,7 +2770,7 @@ public class MainActivity extends AppCompatActivity {
 
         Arrays.fill(waveEnemyX, OUT_OF_BOUNDS);
         float sumOfEnemySizes = 0;
-        for (int i = 0; i < waveEnemies[cw].length(); i ++) {
+        for (int i = 0; i < waveEnemies.get(cw).length(); i ++) {
             do {
                 waveEnemyX[i] = (int) (Math.random() * screenWidth);
                 tempI = waveEnemyX[i] / towerSize;
@@ -2781,7 +2783,7 @@ public class MainActivity extends AppCompatActivity {
                     fieldTower[tempI][0] == BLOCKED4 ||
                     waveEnemyX[i] == OUT_OF_BOUNDS);
             waveEnemyShotY[i] = enemyDefaultHalfSize;
-            switch (waveEnemies[cw].charAt(i)) {
+            switch (waveEnemies.get(cw).charAt(i)) {
                 case ENEMY0 :
                     try {
                         waveEnemyFullLife[i] = Integer.parseInt(enemySettings0[0]);
@@ -3630,8 +3632,8 @@ public class MainActivity extends AppCompatActivity {
             waveEnemyMoving[i] = true;
             sumOfEnemySizes += waveEnemySize[i];
         }
-        float averageEnemySize = sumOfEnemySizes / waveEnemies[cw].length() * enemyDefaultSize;
-        for (int i = 0; i < waveEnemies[cw].length(); i ++) {
+        float averageEnemySize = sumOfEnemySizes / waveEnemies.get(cw).length() * enemyDefaultSize;
+        for (int i = 0; i < waveEnemies.get(cw).length(); i ++) {
             waveEnemyY[i] = waveStartPoint - (float) (Math.random() + (i * averageEnemySize * 1.2));
         }
         waveStartTime = now;
@@ -3825,7 +3827,7 @@ public class MainActivity extends AppCompatActivity {
             }
             if (now - lastAttackTower[ii][jj] >= tempInterval) { // if it's time
                 lastAttackTower[ii][jj] = now;
-                for (int k = 0; k < waveEnemies[currWave].length(); k ++) { // goes through every enemy in the wave
+                for (int k = 0; k < waveEnemies.get(currWave).length(); k ++) { // goes through every enemy in the wave
                     if (waveEnemyX[k] >= (ii * towerSize) - (currReach * towerHalfSize) &&
                             waveEnemyX[k] <= (ii * towerSize) + towerSize + (currReach * towerHalfSize) &&
                             waveEnemyY[k] >= (jj * towerSize) - (currReach * towerHalfSize) &&
@@ -3879,7 +3881,7 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         createTowerShot(fieldTower[ii][jj], fieldLevel[ii][jj], (ii * towerSize) + towerHalfSize, jj * towerSize, damageToCause, k);
-                        k = waveEnemies[currWave].length(); // end the loop
+                        k = waveEnemies.get(currWave).length(); // end the loop
                     }
                 }
             }
@@ -3918,7 +3920,7 @@ public class MainActivity extends AppCompatActivity {
             deadEnemyX.add(waveEnemyX[ke]);
             deadEnemyY.add((int)(waveEnemyY[ke]));
             deadEnemySize.add(waveEnemySize[ke]);
-            switch (waveEnemies[currWave].charAt(ke)) {
+            switch (waveEnemies.get(currWave).charAt(ke)) {
                 case ENEMY0:
                     audio.play(audioEnemy0Death, false, now);
                     deadEnemyChar.add(ENEMY0_D);
@@ -4476,7 +4478,7 @@ public class MainActivity extends AppCompatActivity {
         drawDeadEnemies();
         if (now - waveStartTime > waveStartDelay) {
             int waveCharsLeft = 0;
-            for (int i = 0; i < waveEnemies[currWave].length(); i ++) { // goes through every char of the wave
+            for (int i = 0; i < waveEnemies.get(currWave).length(); i ++) { // goes through every char of the wave
                 if (waveEnemyX[i] != OUT_OF_BOUNDS) { // checks if needs to be drawn
                     waveCharsLeft ++;
                     spriteNumber = waveEnemyCurrSprite[i]; // gets which sprite should be drawn
@@ -4488,7 +4490,7 @@ public class MainActivity extends AppCompatActivity {
                     enemyCurrentSize = (int)(waveEnemySize[i] * enemyDefaultSize);
                     enemyCurrentHalfSize = enemyCurrentSize / 2;
                     enemyCurrentLifeBarDistance = enemyCurrentSize + (enemyCurrentSize / 4);
-                    drawSprite(waveEnemies[currWave].charAt(i), waveEnemyX[i], (int)(waveEnemyY[i] - fdy), null);
+                    drawSprite(waveEnemies.get(currWave).charAt(i), waveEnemyX[i], (int)(waveEnemyY[i] - fdy), null);
 
                     // changes enemy sprite
                     if (now - waveEnemyLastSprite[i] >= waveEnemySpriteInterval[i]) {
@@ -4526,7 +4528,7 @@ public class MainActivity extends AppCompatActivity {
                         } else {
                             // move enemy shot
                             if (waveEnemyShotY[i] > 0 && waveEnemyShotY[i] < towerHalfSize) {
-                                switch (waveEnemies[currWave].charAt(i)) {
+                                switch (waveEnemies.get(currWave).charAt(i)) {
                                     case ENEMY0 :
                                         drawSprite(ENEMY0_SHOT, waveEnemyX[i], (int)(waveEnemyY[i] + waveEnemyShotY[i] - fdy), null);
                                         break;
@@ -4565,7 +4567,7 @@ public class MainActivity extends AppCompatActivity {
                             // if time, start attack to tower
                             if (now - waveEnemyLastAttack[i] >= waveEnemyAttackInterval[i]) {
                                 waveEnemyShotY[i] = (int)(waveEnemyShotY[i] + waveEnemySpeed[i]);
-                                switch (waveEnemies[currWave].charAt(i)) {
+                                switch (waveEnemies.get(currWave).charAt(i)) {
                                     case ENEMY0 :
                                         audio.play(audioEnemy0Attack, false, now);
                                         break;
@@ -4784,7 +4786,7 @@ public class MainActivity extends AppCompatActivity {
         } else if (won && now - winTime > winDelay) {
             drawDialog("You won.  8<D", "\\o/", "", 1);
         } else if (gameClosePressed) {
-            drawDialog("Want to leave the game?", "Leave", "Continue", 4);
+            drawDialog("Want to leave the game?", "Leave", "Continue", 1);
         }
 
         frameCounter ++;
