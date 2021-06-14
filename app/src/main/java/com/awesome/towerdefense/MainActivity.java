@@ -997,6 +997,10 @@ public class MainActivity extends AppCompatActivity {
                     lineParts = fileTextLine.split("=");
                     if (lineParts.length > 1) {
                         switch (lineParts[0]) {
+                            case "waves" :
+                                waveEnemies = lineParts[1].split(",");
+                                waves = waveEnemies.length;
+                                break;
                             case "towers" :
                                 try {
                                     towerSize = screenWidth / Integer.parseInt(lineParts[1]);
@@ -1184,10 +1188,6 @@ public class MainActivity extends AppCompatActivity {
                                         towerMaxUpdate.put(TOWER4, EMPTY1);
                                         break;
                                 }
-                                break;
-                            case "waves" :
-                                waveEnemies = lineParts[1].split(",");
-                                waves = waveEnemies.length;
                                 break;
                             case "enemy0" :
                                 enemySettings0 = lineParts[1].split(",");
