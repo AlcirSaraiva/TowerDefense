@@ -130,6 +130,9 @@ public class MainActivity extends AppCompatActivity {
     private int currentRank;
     private boolean levelStartFieldScroll = false;
     private long levelStartTime, levelStartFieldScrollDelay = 1000;
+    private int levelMessageWave;
+    private String levelMessageText;
+    private boolean levelMessageShown;
 
     // field
     private int extraScreen; // how much beyond screenHeight will be used for the field
@@ -963,6 +966,7 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean loadLevelSettings(String mod, int whichLevel) {
         boolean result = true;
+        String tempLine;
         waveEnemies = new ArrayList<>();
 
         String whichLevelTXT = "level_001.txt";
@@ -985,6 +989,8 @@ public class MainActivity extends AppCompatActivity {
         levelCoins = 0;
         levelHearts = 0;
         waves = 0;
+        levelMessageWave = 0;
+        levelMessageText = "";
 
         BufferedReader reader = null;
         try {
@@ -992,12 +998,29 @@ public class MainActivity extends AppCompatActivity {
             String fileTextLine;
             String[] lineParts;
             while ((fileTextLine = reader.readLine()) != null) {
+                tempLine = fileTextLine;
                 fileTextLine = fileTextLine.replaceAll(" ", "");
                 fileTextLine = fileTextLine.toLowerCase();
                 if (!fileTextLine.startsWith("#")) {
                     lineParts = fileTextLine.split("=");
                     if (lineParts.length > 1) {
                         switch (lineParts[0]) {
+                            case "message" :
+                                try {
+                                    levelMessageWave = Integer.parseInt(lineParts[1]);
+                                } catch (NumberFormatException e) {
+                                    levelMessageWave = 0;
+                                    System.out.println(TAG + "towerSize: " + e.getMessage());
+                                }
+                                break;
+                            case "messagetext" :
+                                lineParts = tempLine.split("=");
+                                if (lineParts.length > 1) {
+                                    levelMessageText = lineParts[1];
+                                } else {
+                                    levelMessageText = " ";
+                                }
+                                break;
                             case "wave" :
                                 waveEnemies.add(lineParts[1]);
                                 break;
@@ -2095,6 +2118,11 @@ public class MainActivity extends AppCompatActivity {
                                 touchY <= menuButtonHalfSize * 3) { // close
                             audio.play(audioClick, false, now);
                             gameClosePressed = true;
+                        } else if (!levelMessageShown) {
+                            if (yesButtonPressed()) {
+                                levelMessageShown = true;
+                            }
+                            waveStartTime = now;
                         } else if (towerMenu) { // put a tower in the field
                             if (touchX <= towerMenuWidth &&
                                     touchY >= (screenHeight / 2) - towerMenuHalfHeight &&
@@ -2722,6 +2750,12 @@ public class MainActivity extends AppCompatActivity {
                 levelStartFieldScroll = false;
             }
 
+            if (levelMessageWave > 0 && levelMessageWave <= waves) {
+                levelMessageShown = false;
+            } else {
+                levelMessageShown = true;
+            }
+
             levelStartTime = now;
 
             setNewWave(currWave);
@@ -2754,19 +2788,6 @@ public class MainActivity extends AppCompatActivity {
         waveEnemyPayment = new int[waveEnemies.get(cw).length()];
         waveEnemySize = new float[waveEnemies.get(cw).length()];
         waveEnemyMoving = new boolean[waveEnemies.get(cw).length()];
-
-        /*
-        // calculates spaceAvailableForEnemies
-        int fc = 0;
-        for (int xc = 0; xc < horizTower; xc ++) {
-            if (fieldTower[xc][0] != BLOCKED1 &&
-                    fieldTower[xc][0] != BLOCKED2 &&
-                    fieldTower[xc][0] != BLOCKED3 &&
-                    fieldTower[xc][0] != BLOCKED4) {
-                fc ++;
-            }
-        }
-        int spaceAvailableForEnemies = fc * enemyDefaultSize;*/
 
         Arrays.fill(waveEnemyX, OUT_OF_BOUNDS);
         float sumOfEnemySizes = 0;
@@ -4320,9 +4341,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void drawGame() {
         drawFieldAndTowers();
-        if (!gameClosePressed && !won) {
+        if (!gameClosePressed && !won && levelMessageShown) {
             drawWave();
-        } else if (!gameClosePressed) {
+        } else if (!gameClosePressed && levelMessageShown) {
             drawDeadEnemies();
         }
         drawGameUI();
@@ -4685,7 +4706,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void drawGameUI() {
         if (alive && !gameClosePressed && !won) {
-            if (towerMenu) {
+            if (!levelMessageShown) {
+                drawDialog(levelMessageText, "Ok", "", 4);
+            } else if (towerMenu) {
                 drawSprite(TOWER_MENU, 0, screenHeight / 2, null);
 
                 // unavailable tower or price
@@ -4771,7 +4794,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     drawText("last wave", 35, 100, 180, 0xFF00FF00, 0xFF000000, 4, Paint.Align.LEFT);
                 }
-            } else {
+            } else if (levelMessageShown) {
                 if (currWave + 1 < waves) {
                     drawText("wave " + (currWave + 1) + " of " + waves + " in " + ((waveStartDelay / 1000) - (now - waveStartTime) / 1000) + " seconds", 35, 100, 180, 0xFF00FF00, 0xFF000000, 4, Paint.Align.LEFT);
                 } else {
