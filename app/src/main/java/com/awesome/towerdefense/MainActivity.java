@@ -111,6 +111,7 @@ public class MainActivity extends AppCompatActivity {
     private int audioEnemy0Death, audioEnemy1Death, audioEnemy2Death, audioEnemy3Death, audioEnemy4Death, audioEnemy5Death, audioEnemy6Death, audioEnemy7Death, audioEnemy8Death, audioEnemy9Death;
     private int audioTower1Attack, audioTower2Attack, audioTower3Attack, audioTower4Attack;
     private int audioTower1Death, audioTower2Death, audioTower3Death, audioTower4Death;
+    private int audioBomb;
 
     // game
     private int level = 0, waves, currWave, waveStartPoint;
@@ -169,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
     private int fieldSelectionX, oldFieldSelectionX;
     private int fieldSelectionY, oldFieldSelectionY;
     private boolean towerMenu, upgradeMenu, confirmation;
-    private int towerMenuWidth, towerMenuHalfHeight;
+    private int towerMenuWidth, towerMenuHalfWidth, towerMenuHalfHeight;
     private int upgradeMenuWidth, upgradeMenuHalfHeight, upMenuX, upMenuY, upMenuCostY, towerUpLevel;
     private int confirmationX, confirmationY;
     private int horizTower, vertTowers;
@@ -231,6 +232,13 @@ public class MainActivity extends AppCompatActivity {
     private int[] waveEnemyFullLife, waveEnemyCurrLife;
     private int[][] towerCurrLife;
     private int levelHearts, currHearts, heartSize, heartHalfSize;
+
+    // bomb
+    private final char BOMB_MENU = 63, BOMB_MENU_SELECTED = 64, BOMB = 65;
+    private int bombStrength, bombX, bombY, newBombX, newBombY, bombSprite;
+    private long bombDuration, bombTime;
+    private boolean bombMenuSelected, bombDropped;
+    private int bombSize;
 
     // network
     private int numberOfFilesToUpdate;
@@ -330,6 +338,7 @@ public class MainActivity extends AppCompatActivity {
         // game field
         waveStartPoint = -100;
         towerMenuWidth = screenWidth / 9;
+        towerMenuHalfWidth = towerMenuWidth / 2;
         towerMenuHalfHeight = towerMenuWidth * 2;
 
         buildingTowerDuration = 400;
@@ -1001,6 +1010,26 @@ public class MainActivity extends AppCompatActivity {
                     lineParts = fileTextLine.split("=");
                     if (lineParts.length > 1) {
                         switch (lineParts[0]) {
+                            case "bomb" :
+                                String[] bmb = lineParts[1].split(",");
+                                if (bmb.length > 1) {
+                                    try {
+                                        bombStrength = Integer.parseInt(bmb[0]);
+                                    } catch (NumberFormatException e) {
+                                        bombStrength = 0;
+                                        System.out.println(TAG + "bomb: " + e.getMessage());
+                                    }
+                                    try {
+                                        bombDuration = Long.parseLong(bmb[1]);
+                                    } catch (NumberFormatException e) {
+                                        bombDuration = 1000;
+                                        System.out.println(TAG + "bomb: " + e.getMessage());
+                                    }
+                                } else {
+                                    bombStrength = 0;
+                                    bombDuration = 1000;
+                                }
+                                break;
                             case "message" :
                                 try {
                                     levelMessageWave = Integer.parseInt(lineParts[1]);
@@ -2147,6 +2176,7 @@ public class MainActivity extends AppCompatActivity {
                                     confirmation = true;
                                     confirmationX = 0;
                                     confirmationY = (screenHeight / 2) - towerMenuHalfHeight;
+                                    bombMenuSelected = false;
                                 } else {
                                     System.out.println(TAG + "not enough coins");
                                 }
@@ -2173,6 +2203,7 @@ public class MainActivity extends AppCompatActivity {
                                     confirmation = true;
                                     confirmationX = 0;
                                     confirmationY = (screenHeight / 2) - (towerMenuHalfHeight / 2);
+                                    bombMenuSelected = false;
                                 } else {
                                     System.out.println(TAG + "not enough coins");
                                 }
@@ -2199,6 +2230,7 @@ public class MainActivity extends AppCompatActivity {
                                     confirmation = true;
                                     confirmationX = 0;
                                     confirmationY = screenHeight / 2;
+                                    bombMenuSelected = false;
                                 } else {
                                     System.out.println(TAG + "not enough coins");
                                 }
@@ -2225,8 +2257,22 @@ public class MainActivity extends AppCompatActivity {
                                     confirmation = true;
                                     confirmationX = 0;
                                     confirmationY = (screenHeight / 2) + (towerMenuHalfHeight / 2);
+                                    bombMenuSelected = false;
                                 } else {
                                     System.out.println(TAG + "not enough coins");
+                                }
+                            } else if (touchX >= (screenWidth / 2) - towerMenuHalfWidth &&
+                                    touchX <= (screenWidth / 2) + towerMenuHalfWidth &&
+                                    touchY >= screenHeight - towerMenuWidth &&
+                                    !bombDropped) { // bomb menu
+                                if (!bombMenuSelected) {
+                                    bombMenuSelected = true;
+                                    upgradeMenu = false;
+                                    resetConfirmation();
+                                } else { // fires bomb
+                                    bombMenuSelected = false;
+                                    towerMenu = false;
+                                    dropBomb();
                                 }
                             } else {
                                 checkFieldTouch();
@@ -2649,6 +2695,7 @@ public class MainActivity extends AppCompatActivity {
         audioFieldSelect = audio.load(R.raw.audio_field_select);
         audioWon = audio.load(R.raw.audio_won);
         audioLost = audio.load(R.raw.audio_lost);
+        audioBomb = audio.load(R.raw.audio_bomb);
     }
 
     // game stuff
@@ -2755,6 +2802,10 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 levelMessageShown = true;
             }
+
+            bombMenuSelected = false;
+            bombDropped = false;
+            bombSize = towerSize * 3 ;
 
             levelStartTime = now;
 
@@ -4062,12 +4113,16 @@ public class MainActivity extends AppCompatActivity {
 
             if ((fieldSelectionY <= minVertTower ||
                     fieldSelectionY >= maxVertTower) ||
-                    (fieldSelectionX == oldFieldSelectionX &&
-                            fieldSelectionY == oldFieldSelectionY) || currentTower == BLOCKED1 || currentTower == BLOCKED2 || currentTower == BLOCKED3 || currentTower == BLOCKED4) {
+                    (fieldSelectionX == oldFieldSelectionX && fieldSelectionY == oldFieldSelectionY) ||
+                    currentTower == BLOCKED1 ||
+                    currentTower == BLOCKED2 ||
+                    currentTower == BLOCKED3 ||
+                    currentTower == BLOCKED4) { // selected same place again or blocked field
                 audio.play(audioFieldSelect, false, now);
                 resetTowerMark();
                 towerMenu = false;
                 upgradeMenu = false;
+                bombMenuSelected = false;
             } else if (currentTower == EMPTY1 ||
                     currentTower == EMPTY2 ||
                     currentTower == EMPTY3 ||
@@ -4075,17 +4130,25 @@ public class MainActivity extends AppCompatActivity {
                     currentTower == TOWER1_D ||
                     currentTower == TOWER2_D ||
                     currentTower == TOWER3_D ||
-                    currentTower == TOWER4_D) {
+                    currentTower == TOWER4_D) { // selected empty field
                 audio.play(audioFieldSelect, false, now);
-                towerMenu = true; // mark in the field where touched
+                towerMenu = true;
+                newBombX = (fieldSelectionX - 1) * towerSize;
+                newBombY = (fieldSelectionY - 1) * towerSize;
                 confirmation = false;
                 confirmationX = OUT_OF_BOUNDS;
                 confirmationY = OUT_OF_BOUNDS;
-            } else if (currentTower != BASE && currentTower != BLOCKED1 && currentTower != BLOCKED2 && currentTower != BLOCKED3 && currentTower != BLOCKED4) {
+                bombMenuSelected = false;
+            } else if (currentTower != BASE &&
+                    currentTower != BLOCKED1 &&
+                    currentTower != BLOCKED2 &&
+                    currentTower != BLOCKED3 &&
+                    currentTower != BLOCKED4) { // the place has already a tower
                 audio.play(audioFieldSelect, false, now);
                 towerMenu = false;
-                upgradeMenu = true; // the place has already a tower
+                upgradeMenu = true;
                 confirmation = false;
+                bombMenuSelected = false;
                 confirmationX = OUT_OF_BOUNDS;
                 confirmationY = OUT_OF_BOUNDS;
                 checkTowerType();
@@ -4192,6 +4255,16 @@ public class MainActivity extends AppCompatActivity {
                 upMenuCostY = (screenHeight / 2) - (towerMenuHalfHeight / 5);
                 break;
         }
+    }
+
+    private void dropBomb() {
+        audio.play(audioBomb, false, now);
+        bombX = newBombX;
+        bombY = newBombY;
+        resetTowerMark();
+        bombDropped = true;
+        bombTime = now;
+        bombSprite = 1;
     }
 
     // drawings
@@ -4343,6 +4416,7 @@ public class MainActivity extends AppCompatActivity {
         drawFieldAndTowers();
         if (!gameClosePressed && !won && (levelMessageShown || currWave != levelMessageWave - 1)) {
             drawWave();
+            drawBomb();
         } else if (!gameClosePressed && (levelMessageShown || currWave != levelMessageWave - 1)) {
             drawDeadEnemies();
         }
@@ -4495,6 +4569,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void drawBomb() {
+        if (bombDropped) {
+            drawSprite(BOMB, bombX, bombY - fdy, null);
+            if (now - bombTime > bombDuration) {
+                bombDropped = false;
+            } else if (now - bombTime > bombDuration / 4 * 3 && bombSprite == 3) {
+                bombSprite = 4;
+            } else if (now - bombTime > bombDuration / 4 * 2 && bombSprite == 2) {
+                bombSprite = 3;
+            } else if (now - bombTime > bombDuration / 4 && bombSprite == 1) {
+                bombSprite = 2;
+            }
+        }
+    }
+
     private void drawWave() {
         drawDeadEnemies();
         if (now - waveStartTime > waveStartDelay) {
@@ -4640,7 +4729,18 @@ public class MainActivity extends AppCompatActivity {
                             alive = false;
                             audio.play(audioLost, true, now);
                         }
-                    }
+                    } else if (bombDropped &&
+                                waveEnemyX[i] - enemyCurrentHalfSize > bombX &&
+                                waveEnemyX[i] + enemyCurrentHalfSize < bombX + bombSize &&
+                                waveEnemyY[i] - enemyCurrentSize > bombY &&
+                                waveEnemyY[i] < bombY + bombSize) { // checks if affected by special power like bombs
+                            waveEnemyCurrLife[i] --;
+                            if (waveEnemyCurrLife[i] <= 0 &&
+                                    waveEnemyX[i] != OUT_OF_BOUNDS) { // kills enemy
+                                levelCoins += waveEnemyPayment[i];
+                                removeEnemy(i, true);
+                            }
+                        }
                 }
             }
 
@@ -4710,26 +4810,33 @@ public class MainActivity extends AppCompatActivity {
                 drawDialog(levelMessageText, "Ok", "", 4);
             } else if (towerMenu) {
                 drawSprite(TOWER_MENU, 0, screenHeight / 2, null);
+                if (bombStrength > 0 && !bombDropped) {
+                    if (bombMenuSelected) {
+                        drawSprite(BOMB_MENU_SELECTED, screenWidth / 2, screenHeight - towerMenuWidth, null);
+                    } else {
+                        drawSprite(BOMB_MENU, screenWidth / 2, screenHeight - towerMenuWidth, null);
+                    }
+                }
                 // unavailable tower or price
                 if (!towerAvailable.get(TOWER1)) {
                     drawSprite(TOWER_UNAVAILABLE, 0, (screenHeight / 2) - towerMenuHalfHeight, null);
                 } else {
-                    drawText(costTower1.get(EMPTY1) + "", 32, towerMenuWidth / 2, (screenHeight / 2) - (towerMenuHalfHeight / 30 * 22), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
+                    drawText(costTower1.get(EMPTY1) + "", 32, towerMenuHalfWidth, (screenHeight / 2) - (towerMenuHalfHeight / 30 * 22), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                 }
                 if (!towerAvailable.get(TOWER2)) {
                     drawSprite(TOWER_UNAVAILABLE, 0, (screenHeight / 2) - (towerMenuHalfHeight / 2), null);
                 } else {
-                    drawText(costTower2.get(EMPTY1) + "", 32, towerMenuWidth / 2, (screenHeight / 2) - (towerMenuHalfHeight / 5), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
+                    drawText(costTower2.get(EMPTY1) + "", 32, towerMenuHalfWidth, (screenHeight / 2) - (towerMenuHalfHeight / 5), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                 }
                 if (!towerAvailable.get(TOWER3)) {
                     drawSprite(TOWER_UNAVAILABLE, 0, (screenHeight / 2), null);
                 } else {
-                    drawText(costTower3.get(EMPTY1) + "", 32, towerMenuWidth / 2, (screenHeight / 2) + (towerMenuHalfHeight / 24 * 7), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
+                    drawText(costTower3.get(EMPTY1) + "", 32, towerMenuHalfWidth, (screenHeight / 2) + (towerMenuHalfHeight / 24 * 7), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                 }
                 if (!towerAvailable.get(TOWER4)) {
                     drawSprite(TOWER_UNAVAILABLE, 0, (screenHeight / 2) + (towerMenuHalfHeight / 2), null);
                 } else {
-                    drawText(costTower4.get(EMPTY1) + "", 32, towerMenuWidth / 2, (screenHeight / 2) + (towerMenuHalfHeight / 30 * 25), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
+                    drawText(costTower4.get(EMPTY1) + "", 32, towerMenuHalfWidth, (screenHeight / 2) + (towerMenuHalfHeight / 30 * 25), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                 }
                 if (confirmation) drawSprite(CONFIRMATION, confirmationX, confirmationY, null);
             } else if (upgradeMenu) {
@@ -4738,35 +4845,35 @@ public class MainActivity extends AppCompatActivity {
                 switch (fieldTower[fieldSelectionX][fieldSelectionY]) {
                     case TOWER1 :
                         if (costTower1.containsKey(tempLevel)) {
-                            drawText(costTower1.get(tempLevel) + "", 32, screenWidth - (towerMenuWidth / 2), upMenuCostY, 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
+                            drawText(costTower1.get(tempLevel) + "", 32, screenWidth - towerMenuHalfWidth, upMenuCostY, 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                             if (tempLevel == TL5)
-                                drawText(costTower1.get(tempLevel) + "", 32, screenWidth - (towerMenuWidth / 2), upMenuCostY + (towerMenuHalfHeight / 2), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
+                                drawText(costTower1.get(tempLevel) + "", 32, screenWidth - towerMenuHalfWidth, upMenuCostY + (towerMenuHalfHeight / 2), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                         }
                         drawText((int)((float)(sellTower1.get(currentTowerLevel)) / fullLifeTower1.get(currentTowerLevel) * towerCurrLife[fieldSelectionX][fieldSelectionY]) + "", 32, screenWidth - (towerMenuWidth / 2), (screenHeight / 2) + (towerMenuHalfHeight / 30 * 25), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                         break;
                     case TOWER2 :
                         if (costTower1.containsKey(tempLevel)) {
-                            drawText(costTower2.get(tempLevel) + "", 32, screenWidth - (towerMenuWidth / 2), upMenuCostY, 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
+                            drawText(costTower2.get(tempLevel) + "", 32, screenWidth - towerMenuHalfWidth, upMenuCostY, 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                             if (tempLevel == TL5)
-                                drawText(costTower2.get(tempLevel) + "", 32, screenWidth - (towerMenuWidth / 2), upMenuCostY + (towerMenuHalfHeight / 2), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
+                                drawText(costTower2.get(tempLevel) + "", 32, screenWidth - towerMenuHalfWidth, upMenuCostY + (towerMenuHalfHeight / 2), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                         }
-                        drawText((int)((float)(sellTower2.get(currentTowerLevel)) / fullLifeTower2.get(currentTowerLevel) * towerCurrLife[fieldSelectionX][fieldSelectionY]) + "", 32, screenWidth - (towerMenuWidth / 2), (screenHeight / 2) + (towerMenuHalfHeight / 30 * 25), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
+                        drawText((int)((float)(sellTower2.get(currentTowerLevel)) / fullLifeTower2.get(currentTowerLevel) * towerCurrLife[fieldSelectionX][fieldSelectionY]) + "", 32, screenWidth - towerMenuHalfWidth, (screenHeight / 2) + (towerMenuHalfHeight / 30 * 25), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                         break;
                     case TOWER3 :
                         if (costTower1.containsKey(tempLevel)) {
-                            drawText(costTower3.get(tempLevel) + "", 32, screenWidth - (towerMenuWidth / 2), upMenuCostY, 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
+                            drawText(costTower3.get(tempLevel) + "", 32, screenWidth - towerMenuHalfWidth, upMenuCostY, 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                             if (tempLevel == TL5)
-                                drawText(costTower3.get(tempLevel) + "", 32, screenWidth - (towerMenuWidth / 2), upMenuCostY + (towerMenuHalfHeight / 2), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
+                                drawText(costTower3.get(tempLevel) + "", 32, screenWidth - towerMenuHalfWidth, upMenuCostY + (towerMenuHalfHeight / 2), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                         }
-                        drawText((int)((float)(sellTower3.get(currentTowerLevel)) / fullLifeTower3.get(currentTowerLevel) * towerCurrLife[fieldSelectionX][fieldSelectionY]) + "", 32, screenWidth - (towerMenuWidth / 2), (screenHeight / 2) + (towerMenuHalfHeight / 30 * 25), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
+                        drawText((int)((float)(sellTower3.get(currentTowerLevel)) / fullLifeTower3.get(currentTowerLevel) * towerCurrLife[fieldSelectionX][fieldSelectionY]) + "", 32, screenWidth - towerMenuHalfWidth, (screenHeight / 2) + (towerMenuHalfHeight / 30 * 25), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                     break;
                     case TOWER4 :
                         if (costTower1.containsKey(tempLevel)) {
-                            drawText(costTower4.get(tempLevel) + "", 32, screenWidth - (towerMenuWidth / 2), upMenuCostY, 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
+                            drawText(costTower4.get(tempLevel) + "", 32, screenWidth - towerMenuHalfWidth, upMenuCostY, 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                             if (tempLevel == TL5)
-                                drawText(costTower4.get(tempLevel) + "", 32, screenWidth - (towerMenuWidth / 2), upMenuCostY + (towerMenuHalfHeight / 2), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
+                                drawText(costTower4.get(tempLevel) + "", 32, screenWidth - towerMenuHalfWidth, upMenuCostY + (towerMenuHalfHeight / 2), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                         }
-                        drawText((int)((float)(sellTower4.get(currentTowerLevel)) / fullLifeTower4.get(currentTowerLevel) * towerCurrLife[fieldSelectionX][fieldSelectionY]) + "", 32, screenWidth - (towerMenuWidth / 2), (screenHeight / 2) + (towerMenuHalfHeight / 30 * 25), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
+                        drawText((int)((float)(sellTower4.get(currentTowerLevel)) / fullLifeTower4.get(currentTowerLevel) * towerCurrLife[fieldSelectionX][fieldSelectionY]) + "", 32, screenWidth - towerMenuHalfWidth, (screenHeight / 2) + (towerMenuHalfHeight / 30 * 25), 0xFFFFFFFF, 0xFF000000, 6, Paint.Align.CENTER);
                         break;
                 }
 
@@ -5038,6 +5145,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void drawSprite(char sprite, int sx, int sy, Paint paint) {
         switch (sprite) {
+            case BOMB :
+                rectOrigin.set(850 + (bombSprite * 100), 0, 949 + (bombSprite * 100), 99);
+                rectDestiny.set(sx, sy, sx + bombSize, sy + bombSize);
+                break;
+            case BOMB_MENU :
+                rectOrigin.set(750, 0, 799, 49);
+                rectDestiny.set(sx - towerMenuHalfWidth, sy, sx + towerMenuHalfWidth, sy + towerMenuWidth);
+                break;
+            case BOMB_MENU_SELECTED :
+                rectOrigin.set(800, 0, 849, 49);
+                rectDestiny.set(sx - towerMenuHalfWidth, sy, sx + towerMenuHalfWidth, sy + towerMenuWidth);
+                break;
             case GAME_CLOSE_BUTTON :
                 rectOrigin.set(0, 1050, 99, 1149);
                 rectDestiny.set(sx - menuButtonHalfSize, sy - menuButtonHalfSize, sx + menuButtonHalfSize, sy + menuButtonHalfSize);
@@ -5051,7 +5170,7 @@ public class MainActivity extends AppCompatActivity {
                 rectDestiny.set(sx, sy, sx + coinSize, sy + coinSize);
                 break;
             case FIELD_SELECTION :
-                rectOrigin.set(900, 50, 949, 99);
+                rectOrigin.set(650, 0, 699, 49);
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case TOWER_MENU :
@@ -5063,12 +5182,8 @@ public class MainActivity extends AppCompatActivity {
                 rectDestiny.set(sx, sy - upgradeMenuHalfHeight, sx + upgradeMenuWidth, sy + upgradeMenuHalfHeight);
                 break;
             case CONFIRMATION :
-                rectOrigin.set(900, 100, 949, 149);
+                rectOrigin.set(700, 0, 749, 49);
                 rectDestiny.set(sx, sy, sx + towerMenuWidth, sy + towerMenuWidth);
-                break;
-            case BUILDING :
-                rectOrigin.set(850, 50, 899, 99);
-                rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case TOWER1 :
                 rectOrigin.set(towerUpLevel * 50, 1150 + (towerShootingSprite * 200), 49 + (towerUpLevel * 50), 1199 + (towerShootingSprite * 200));
@@ -5102,36 +5217,40 @@ public class MainActivity extends AppCompatActivity {
                 rectOrigin.set(850, 550, 899, 599);
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
-            case EMPTY1 :
-                rectOrigin.set(750, 0, 799, 49);
-                rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
-                break;
-            case EMPTY2 :
-                rectOrigin.set(800, 0, 849, 49);
-                rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
-                break;
-            case EMPTY3 :
-                rectOrigin.set(850, 0, 899, 49);
-                rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
-                break;
-            case EMPTY4 :
-                rectOrigin.set(900, 0, 949, 49);
-                rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
-                break;
             case BLOCKED1 :
-                rectOrigin.set(250, 0, 299, 49);
+                rectOrigin.set(200, 0, 249, 49);
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case BLOCKED2 :
-                rectOrigin.set(300, 0, 349, 49);
+                rectOrigin.set(250, 0, 299, 49);
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case BLOCKED3 :
-                rectOrigin.set(350, 0, 399, 49);
+                rectOrigin.set(300, 0, 349, 49);
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case BLOCKED4 :
+                rectOrigin.set(350, 0, 399, 49);
+                rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
+                break;
+            case EMPTY1 :
                 rectOrigin.set(400, 0, 449, 49);
+                rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
+                break;
+            case EMPTY2 :
+                rectOrigin.set(450, 0, 499, 49);
+                rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
+                break;
+            case EMPTY3 :
+                rectOrigin.set(500, 0, 549, 49);
+                rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
+                break;
+            case EMPTY4 :
+                rectOrigin.set(550, 0, 599, 49);
+                rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
+                break;
+            case BUILDING :
+                rectOrigin.set(600, 0, 649, 49);
                 rectDestiny.set(sx, sy, sx + towerSize, sy + towerSize);
                 break;
             case BASE :
@@ -5316,9 +5435,6 @@ public class MainActivity extends AppCompatActivity {
         int pressedKey = event.getUnicodeChar();
 
         if (action == KeyEvent.ACTION_DOWN) {
-            /*if (keyCode == KeyEvent.KEYCODE_BACK) {
-
-            } else */
             if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
                 audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI);
             } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
@@ -5326,6 +5442,22 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return true;
+    }
+
+    @Override
+    protected void onPause() {
+        if (gameState.equals("game")) {
+            audio.pauseTrack();
+        }
+        super.onPause();
+    }
+
+    @Override
+    protected void onPostResume() {
+        if (gameState.equals("game")) {
+            audio.playTrack();
+        }
+        super.onPostResume();
     }
 
     public class GameView extends View {

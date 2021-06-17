@@ -44,7 +44,19 @@ public class Audio {
     }
 
     public void playTrack() {
-        soundtrack.start();
+        try {
+            soundtrack.start();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void pauseTrack() {
+        try {
+            soundtrack.pause();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        }
     }
 
     public void play(int soundId, boolean priority, long now) {
